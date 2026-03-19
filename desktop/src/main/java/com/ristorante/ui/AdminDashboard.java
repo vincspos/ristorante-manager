@@ -5,12 +5,28 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableRow;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+
+import java.net.http.*;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ristorante.ui.model.UtenteDTO;
 
 public class AdminDashboard {
 
@@ -50,6 +66,7 @@ public class AdminDashboard {
         contentArea.getChildren().setAll(buildDashboard(username));
 
         Scene scene = new Scene(root, 1300, 800);
+        scene.getStylesheets().add(getClass().getResource("/style/app.css").toExternalForm());
         stage.setTitle("Ristorante Manager - Dashboard Admin");
         stage.setScene(scene);
         stage.show();
@@ -131,13 +148,156 @@ public class AdminDashboard {
     }
 
     private VBox buildUtenti() {
+
         Label title = new Label("Gestione Utenti");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1f2937;");
+        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1f2937;");
 
-        Label placeholder = new Label("Qui vedrai la lista utenti");
-        placeholder.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280;");
+        Label subtitle = new Label("Visualizza e gestisci gli utenti del sistema");
+        subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280;");
 
-        return new VBox(20, title, placeholder);
+        Button nuovoUtenteButton = new Button("+ Nuovo utente");
+        nuovoUtenteButton.setPrefHeight(38);
+        nuovoUtenteButton.setStyle("""
+            -fx-background-color: #0f766e;
+            -fx-text-fill: white;
+            -fx-font-size: 13px;
+            -fx-font-weight: bold;
+            -fx-background-radius: 10;
+            -fx-cursor: hand;
+            -fx-padding: 0 16 0 16;
+        """);
+
+        HBox topBar = new HBox();
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.getChildren().addAll(new VBox(4, title, subtitle), spacer, nuovoUtenteButton);
+
+        TableView<UtenteDTO> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setPrefHeight(520);
+        table.setFixedCellSize(42);
+        table.setStyle("""
+            -fx-background-color: white;
+            -fx-background-radius: 12;
+            -fx-border-radius: 12;
+            -fx-border-color: transparent;
+            -fx-font-size: 13px;
+            -fx-table-cell-border-color: #eef2f7;
+            -fx-padding: 6;
+        """);
+
+        // Hover righe
+        table.setRowFactory(tv -> {
+            TableRow<UtenteDTO> row = new TableRow<>();
+
+            row.hoverProperty().addListener((obs, oldVal, isHovered) -> {
+                if (!row.isEmpty()) {
+                    if (isHovered) {
+                        row.setStyle("-fx-background-color: #f8fafc;");
+                    } else {
+                        row.setStyle("-fx-background-color: white;");
+                    }
+                }
+            });
+
+            return row;
+        });
+
+        TableColumn<UtenteDTO, Long> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colId.setMaxWidth(70);
+        colId.setStyle("-fx-alignment: CENTER;");
+
+        TableColumn<UtenteDTO, String> colUsername = new TableColumn<>("Username");
+        colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
+
+        TableColumn<UtenteDTO, String> colNome = new TableColumn<>("Nome");
+        colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
+
+        TableColumn<UtenteDTO, String> colCognome = new TableColumn<>("Cognome");
+        colCognome.setCellValueFactory(new PropertyValueFactory<>("cognome"));
+
+        TableColumn<UtenteDTO, String> colRuolo = new TableColumn<>("Ruolo");
+        colRuolo.setCellValueFactory(new PropertyValueFactory<>("ruolo"));
+
+        // Badge ruolo colorato
+        colRuolo.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String ruolo, boolean empty) {
+                super.updateItem(ruolo, empty);
+
+                if (empty || ruolo == null) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+
+                Label badge = new Label(ruolo);
+                badge.setPadding(new Insets(4, 10, 4, 10));
+                badge.setFont(Font.font("System", FontWeight.BOLD, 11));
+                badge.setTextFill(Color.WHITE);
+
+                switch (ruolo) {
+                    case "ADMIN" -> badge.setStyle("""
+                        -fx-background-color: #0f766e;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                    case "CASSA" -> badge.setStyle("""
+                        -fx-background-color: #2563eb;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                    case "SALA" -> badge.setStyle("""
+                        -fx-background-color: #7c3aed;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                    case "CUCINA" -> badge.setStyle("""
+                        -fx-background-color: #ea580c;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                    case "PIZZERIA" -> badge.setStyle("""
+                        -fx-background-color: #dc2626;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                    case "RIDER" -> badge.setStyle("""
+                        -fx-background-color: #0891b2;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                    default -> badge.setStyle("""
+                        -fx-background-color: #6b7280;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                }
+
+                setGraphic(badge);
+                setText(null);
+            }
+        });
+
+        table.getColumns().addAll(colId, colUsername, colNome, colCognome, colRuolo);
+        table.getItems().addAll(loadUtenti());
+
+        // Header più pulito: usiamo card esterna e colonna ben leggibile
+        VBox tableCard = new VBox(table);
+        tableCard.setPadding(new Insets(18));
+        tableCard.setStyle("""
+            -fx-background-color: white;
+            -fx-background-radius: 18;
+            -fx-border-radius: 18;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 16, 0.2, 0, 2);
+        """);
+
+        VBox container = new VBox(20, topBar, tableCard);
+        container.setPadding(new Insets(4, 0, 0, 0));
+
+        return container;
     }
 
     private VBox buildPlaceholder(String sectionName) {
@@ -148,5 +308,38 @@ public class AdminDashboard {
         placeholder.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280;");
 
         return new VBox(20, title, placeholder);
+    }
+    
+    private List<UtenteDTO> loadUtenti() {
+        List<UtenteDTO> lista = new ArrayList<>();
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8081/api/utenti"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            ObjectMapper mapper = new ObjectMapper();
+            var jsonList = mapper.readTree(response.body());
+
+            for (var node : jsonList) {
+                lista.add(new UtenteDTO(
+                        node.get("id").asLong(),
+                        node.get("username").asText(),
+                        node.get("nome").asText(),
+                        node.get("cognome").asText(),
+                        node.get("ruolo").get("codice").asText()
+                ));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return lista;
     }
 }
