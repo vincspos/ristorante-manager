@@ -1,5 +1,8 @@
 package com.ristorante.ui.view;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ristorante.ui.model.RuoloDTO;
 import com.ristorante.ui.model.UtenteDTO;
 import com.ristorante.ui.service.UtenteService;
@@ -30,6 +33,12 @@ import javafx.scene.text.FontWeight;
 public class UtentiView {
 
     private final UtenteService utenteService = new UtenteService();
+    
+    private final TableView<UtenteDTO> table = new TableView<>();
+    private final TextField searchField = new TextField();
+    private final ComboBox<String> ruoloFilter = new ComboBox<>();
+
+    private List<UtenteDTO> utentiCompleti = new ArrayList<>();
 
     public VBox build() {
         Label title = new Label("Gestione Utenti");
@@ -56,10 +65,12 @@ public class UtentiView {
         topBar.setAlignment(Pos.CENTER_LEFT);
         topBar.getChildren().addAll(new VBox(4, title, subtitle), spacer, nuovoUtenteButton);
 
-        TableView<UtenteDTO> table = createUtentiTable();
-        refreshTable(table);
+        HBox filtersBar = buildFiltersBar();
 
-        nuovoUtenteButton.setOnAction(e -> showNuovoUtenteDialog(table));
+        configureUtentiTable();
+        loadInitialData();
+
+        nuovoUtenteButton.setOnAction(e -> showNuovoUtenteDialog());
 
         VBox tableCard = new VBox(table);
         tableCard.setPadding(new Insets(18));
@@ -70,14 +81,13 @@ public class UtentiView {
             -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 16, 0.2, 0, 2);
         """);
 
-        VBox container = new VBox(20, topBar, tableCard);
+        VBox container = new VBox(20, topBar, filtersBar, tableCard);
         container.setPadding(new Insets(4, 0, 0, 0));
 
         return container;
     }
 
-    private TableView<UtenteDTO> createUtentiTable() {
-        TableView<UtenteDTO> table = new TableView<>();
+    private void configureUtentiTable() {
         table.setPrefHeight(520);
         table.setFixedCellSize(46);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -172,14 +182,13 @@ public class UtentiView {
         });
 
         table.getColumns().setAll(colId, colUsername, colNome, colCognome, colRuolo);
-        return table;
     }
 
-    private void refreshTable(TableView<UtenteDTO> table) {
-        table.getItems().setAll(utenteService.loadUtenti());
+    private void refreshTable() {
+    	refreshData();
     }
 
-    private void showNuovoUtenteDialog(TableView<UtenteDTO> table) {
+    private void showNuovoUtenteDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Nuovo utente");
         dialog.setHeaderText(null);
@@ -288,7 +297,7 @@ public class UtentiView {
                 return;
             }
 
-            refreshTable(table);
+            refreshTable();
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Successo");
@@ -364,4 +373,97 @@ public class UtentiView {
             -fx-padding: 0 18 0 18;
         """);
     }
+    
+    private HBox buildFiltersBar() {
+        styleTextField(searchField, "Cerca per username, nome o cognome");
+        searchField.setPrefWidth(320);
+
+        ruoloFilter.setPrefWidth(220);
+        ruoloFilter.setPrefHeight(42);
+        ruoloFilter.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-font-size: 14px;
+        """);
+
+        Button aggiornaButton = new Button("Aggiorna");
+        aggiornaButton.setPrefHeight(42);
+        aggiornaButton.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-text-fill: #374151;
+            -fx-font-size: 14px;
+            -fx-font-weight: bold;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-cursor: hand;
+            -fx-padding: 0 18 0 18;
+        """);
+
+        searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+
+        ruoloFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+
+        aggiornaButton.setOnAction(e -> refreshData());
+
+        HBox filtersBar = new HBox(12, searchField, ruoloFilter, aggiornaButton);
+        filtersBar.setAlignment(Pos.CENTER_LEFT);
+
+        return filtersBar;
+    }
+    
+    private void loadInitialData() {
+        utentiCompleti = new ArrayList<>(utenteService.loadUtenti());
+
+        ruoloFilter.getItems().clear();
+        ruoloFilter.getItems().add("Tutti i ruoli");
+        ruoloFilter.getItems().addAll(
+                utenteService.loadRuoli()
+                        .stream()
+                        .map(RuoloDTO::getCodice)
+                        .toList()
+        );
+        ruoloFilter.setValue("Tutti i ruoli");
+
+        applyFilters();
+    }
+    
+    private void refreshData() {
+        utentiCompleti = new ArrayList<>(utenteService.loadUtenti());
+        applyFilters();
+    }
+    
+    private void applyFilters() {
+        String ricerca = searchField.getText() == null
+                ? ""
+                : searchField.getText().trim().toLowerCase();
+
+        String ruoloSelezionato = ruoloFilter.getValue();
+
+        List<UtenteDTO> filtrati = utentiCompleti.stream()
+                .filter(u -> {
+                    boolean matchRicerca =
+                            ricerca.isBlank()
+                                    || containsIgnoreCase(u.getUsername(), ricerca)
+                                    || containsIgnoreCase(u.getNome(), ricerca)
+                                    || containsIgnoreCase(u.getCognome(), ricerca);
+
+                    boolean matchRuolo =
+                            ruoloSelezionato == null
+                                    || ruoloSelezionato.equals("Tutti i ruoli")
+                                    || ruoloSelezionato.equalsIgnoreCase(u.getRuolo());
+
+                    return matchRicerca && matchRuolo;
+                })
+                .toList();
+
+        table.getItems().setAll(filtrati);
+    }
+    
+    private boolean containsIgnoreCase(String value, String search) {
+        return value != null && value.toLowerCase().contains(search);
+    }
+    
 }
