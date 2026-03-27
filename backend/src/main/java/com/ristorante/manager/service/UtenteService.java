@@ -41,6 +41,34 @@ public class UtenteService {
         return utenteRepository.save(utente);
     }
     
+    public Utente update(Utente utente) {
+
+        Utente esistente = utenteRepository.findById(utente.getId())
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+        esistente.setUsername(utente.getUsername());
+        esistente.setNome(utente.getNome());
+        esistente.setCognome(utente.getCognome());
+
+        if (utente.getRuolo() != null && utente.getRuolo().getId() != null) {
+            Ruolo ruolo = ruoloRepository.findById(utente.getRuolo().getId())
+                    .orElseThrow(() -> new RuntimeException("Ruolo non trovato"));
+            esistente.setRuolo(ruolo);
+        }
+
+        return utenteRepository.save(esistente);
+    }
+    
+    public Utente updateStato(Long id, Boolean attivo) {
+
+        Utente utente = utenteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+        utente.setAttivo(attivo);
+
+        return utenteRepository.save(utente);
+    }
+    
     public LoginResponse login(LoginRequest request) {
         Utente utente = utenteRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));

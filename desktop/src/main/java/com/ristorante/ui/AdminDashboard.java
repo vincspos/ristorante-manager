@@ -76,7 +76,7 @@ public class AdminDashboard {
 
             switch (text) {
                 case "Dashboard" -> contentArea.getChildren().setAll(new DashboardHomeView().build(username));
-                case "Utenti" -> contentArea.getChildren().setAll(new UtentiView().build());
+                case "Utenti" -> contentArea.getChildren().setAll(new UtentiView(username).build());
                 default -> contentArea.getChildren().setAll(buildPlaceholder(text));
             }
         });

@@ -39,12 +39,17 @@ public class UtentiView {
     private final ComboBox<String> ruoloFilter = new ComboBox<>();
 
     private List<UtenteDTO> utentiCompleti = new ArrayList<>();
+    
+    private final String loggedUsername;
 
     public VBox build() {
         Label title = new Label("Gestione Utenti");
         title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1f2937;");
 
         Label subtitle = new Label("Visualizza e gestisci gli utenti del sistema");
+        subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280;");
+        
+        Label subtitle2 = new Label("In verde utente loggato");
         subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280;");
 
         Button nuovoUtenteButton = new Button("+ Nuovo utente");
@@ -63,7 +68,7 @@ public class UtentiView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.getChildren().addAll(new VBox(4, title, subtitle), spacer, nuovoUtenteButton);
+        topBar.getChildren().addAll(new VBox(4, title, subtitle, subtitle2), spacer, nuovoUtenteButton);
 
         HBox filtersBar = buildFiltersBar();
 
@@ -101,25 +106,28 @@ public class UtentiView {
             -fx-padding: 0;
         """);
 
-        table.setRowFactory(tv -> {
-            TableRow<UtenteDTO> row = new TableRow<>();
-            row.hoverProperty().addListener((obs, oldVal, isHovered) -> {
-                if (!row.isEmpty()) {
-                    row.setStyle(isHovered
-                            ? "-fx-background-color: #f8fafc;"
-                            : "-fx-background-color: white;");
-                }
-            });
-            return row;
-        });
+        table.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(UtenteDTO item, boolean empty) {
+                super.updateItem(item, empty);
 
-        TableColumn<UtenteDTO, Long> colId = new TableColumn<>("ID");
-        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colId.setResizable(false);
-        colId.setPrefWidth(70);
-        colId.setMinWidth(70);
-        colId.setMaxWidth(70);
-        colId.setStyle("-fx-alignment: CENTER;");
+                if (empty || item == null) {
+                    setStyle("");
+                    return;
+                }
+
+                applyRowStyle(this, item, isHover());
+            }
+
+            {
+                hoverProperty().addListener((obs, oldValue, isHovered) -> {
+                    UtenteDTO item = getItem();
+                    if (item != null && !isEmpty()) {
+                        applyRowStyle(this, item, isHovered);
+                    }
+                });
+            }
+        });
 
         TableColumn<UtenteDTO, String> colUsername = new TableColumn<>("Username");
         colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
@@ -136,11 +144,18 @@ public class UtentiView {
         TableColumn<UtenteDTO, String> colRuolo = new TableColumn<>("Ruolo");
         colRuolo.setCellValueFactory(new PropertyValueFactory<>("ruolo"));
         colRuolo.setStyle("-fx-alignment: CENTER;");
+        
+        TableColumn<UtenteDTO, Void> colAzioni = new TableColumn<>("Azioni");
+        colAzioni.setPrefWidth(220);
+        colAzioni.setMinWidth(220);
+        colAzioni.setMaxWidth(220);
+        colAzioni.setResizable(false);
+        colAzioni.setStyle("-fx-alignment: CENTER;");
 
-        colUsername.prefWidthProperty().bind(table.widthProperty().multiply(0.28));
-        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.22));
-        colCognome.prefWidthProperty().bind(table.widthProperty().multiply(0.25));
-        colRuolo.prefWidthProperty().bind(table.widthProperty().multiply(0.15));
+        colUsername.prefWidthProperty().bind(table.widthProperty().multiply(0.26));
+        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.20));
+        colCognome.prefWidthProperty().bind(table.widthProperty().multiply(0.22));
+        colRuolo.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
 
         colRuolo.setCellFactory(column -> new TableCell<>() {
             private final HBox wrapper = new HBox();
@@ -180,8 +195,83 @@ public class UtentiView {
                 setGraphic(wrapper);
             }
         });
+        
+        colAzioni.setCellFactory(param -> new TableCell<>() {
+            private final Button editButton = new Button("Modifica");
+            private final Button disableButton = new Button("Disattiva");
+            private final HBox actionsBox = new HBox(8, editButton, disableButton);
 
-        table.getColumns().setAll(colId, colUsername, colNome, colCognome, colRuolo);
+            {
+                actionsBox.setAlignment(Pos.CENTER);
+
+                editButton.setPrefHeight(32);
+                editButton.setStyle("""
+                    -fx-background-color: #2563eb;
+                    -fx-text-fill: white;
+                    -fx-font-size: 12px;
+                    -fx-font-weight: bold;
+                    -fx-background-radius: 8;
+                    -fx-cursor: hand;
+                    -fx-padding: 0 12 0 12;
+                """);
+
+                disableButton.setPrefHeight(32);
+                disableButton.setStyle("""
+                    -fx-background-color: #dc2626;
+                    -fx-text-fill: white;
+                    -fx-font-size: 12px;
+                    -fx-font-weight: bold;
+                    -fx-background-radius: 8;
+                    -fx-cursor: hand;
+                    -fx-padding: 0 12 0 12;
+                """);
+
+                editButton.setOnAction(event -> {
+                    UtenteDTO utente = getTableView().getItems().get(getIndex());
+                    showModificaUtenteDialog(utente);
+                });
+
+                disableButton.setOnAction(event -> {
+                    UtenteDTO utente = getTableView().getItems().get(getIndex());
+                    showDisattivaConferma(utente);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    UtenteDTO utente = getTableView().getItems().get(getIndex());
+                    disableButton.setText(utente.isAttivo() ? "Disattiva" : "Riattiva");
+                    disableButton.setStyle(utente.isAttivo()
+                            ? """
+                              -fx-background-color: #dc2626;
+                              -fx-text-fill: white;
+                              -fx-font-size: 12px;
+                              -fx-font-weight: bold;
+                              -fx-background-radius: 8;
+                              -fx-cursor: hand;
+                              -fx-padding: 0 12 0 12;
+                              """
+                            : """
+                              -fx-background-color: #0f766e;
+                              -fx-text-fill: white;
+                              -fx-font-size: 12px;
+                              -fx-font-weight: bold;
+                              -fx-background-radius: 8;
+                              -fx-cursor: hand;
+                              -fx-padding: 0 12 0 12;
+                              """
+                    );
+                    setGraphic(actionsBox);
+                }
+            }
+        });
+
+        table.getColumns().setAll( colUsername, colNome, colCognome, colRuolo, colAzioni);
     }
 
     private void refreshTable() {
@@ -416,6 +506,15 @@ public class UtentiView {
     
     private void loadInitialData() {
         utentiCompleti = new ArrayList<>(utenteService.loadUtenti());
+        
+        utentiCompleti.sort((u1, u2) -> {
+            boolean firstIsLogged = u1.getUsername() != null && u1.getUsername().equalsIgnoreCase(loggedUsername);
+            boolean secondIsLogged = u2.getUsername() != null && u2.getUsername().equalsIgnoreCase(loggedUsername);
+
+            if (firstIsLogged && !secondIsLogged) return -1;
+            if (!firstIsLogged && secondIsLogged) return 1;
+            return 0;
+        });
 
         ruoloFilter.getItems().clear();
         ruoloFilter.getItems().add("Tutti i ruoli");
@@ -432,6 +531,16 @@ public class UtentiView {
     
     private void refreshData() {
         utentiCompleti = new ArrayList<>(utenteService.loadUtenti());
+        
+        utentiCompleti.sort((u1, u2) -> {
+            boolean firstIsLogged = u1.getUsername() != null && u1.getUsername().equalsIgnoreCase(loggedUsername);
+            boolean secondIsLogged = u2.getUsername() != null && u2.getUsername().equalsIgnoreCase(loggedUsername);
+
+            if (firstIsLogged && !secondIsLogged) return -1;
+            if (!firstIsLogged && secondIsLogged) return 1;
+            return 0;
+        });
+        
         applyFilters();
     }
     
@@ -464,6 +573,189 @@ public class UtentiView {
     
     private boolean containsIgnoreCase(String value, String search) {
         return value != null && value.toLowerCase().contains(search);
+    }
+    
+    private void showModificaUtenteDialog(UtenteDTO utente) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Modifica utente");
+        dialog.setHeaderText(null);
+
+        DialogPane dialogPane = dialog.getDialogPane();
+        dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialogPane.setStyle("""
+            -fx-background-color: #f9fafb;
+            -fx-background-radius: 18;
+            -fx-border-radius: 18;
+        """);
+
+        TextField usernameField = new TextField(utente.getUsername());
+        styleTextField(usernameField, "Inserisci username");
+
+        TextField nomeField = new TextField(utente.getNome());
+        styleTextField(nomeField, "Inserisci nome");
+
+        TextField cognomeField = new TextField(utente.getCognome());
+        styleTextField(cognomeField, "Inserisci cognome");
+
+        ComboBox<RuoloDTO> ruoloCombo = new ComboBox<>();
+        ruoloCombo.getItems().addAll(utenteService.loadRuoli());
+        styleComboBox(ruoloCombo, "Seleziona ruolo");
+
+        ruoloCombo.getItems().stream()
+                .filter(r -> r.getId().equals(utente.getRuoloId()))
+                .findFirst()
+                .ifPresent(ruoloCombo::setValue);
+
+        Label title = new Label("Modifica utente");
+        title.setStyle("""
+            -fx-font-size: 22px;
+            -fx-font-weight: bold;
+            -fx-text-fill: #1f2937;
+        """);
+
+        Label subtitle = new Label("Aggiorna i dati dell'utente selezionato");
+        subtitle.setStyle("""
+            -fx-font-size: 13px;
+            -fx-text-fill: #6b7280;
+        """);
+
+        Label errorLabel = new Label();
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
+        errorLabel.setWrapText(true);
+        errorLabel.setStyle("""
+            -fx-text-fill: #dc2626;
+            -fx-font-size: 13px;
+            -fx-font-weight: bold;
+        """);
+
+        VBox form = new VBox(10,
+                createFormLabel("Username"), usernameField,
+                createFormLabel("Nome"), nomeField,
+                createFormLabel("Cognome"), cognomeField,
+                createFormLabel("Ruolo"), ruoloCombo,
+                errorLabel
+        );
+
+        VBox content = new VBox(18, new VBox(4, title, subtitle), form);
+        content.setPadding(new Insets(24));
+        content.setPrefWidth(420);
+
+        dialogPane.setContent(content);
+
+        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
+        Button cancelButton = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
+
+        okButton.setText("Salva modifiche");
+        cancelButton.setText("Annulla");
+
+        okButton.setPrefWidth(150);
+        cancelButton.setPrefWidth(120);
+
+        stylePrimaryButton(okButton);
+        styleSecondaryButton(cancelButton);
+
+        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            String username = usernameField.getText();
+            String nome = nomeField.getText();
+            String cognome = cognomeField.getText();
+            RuoloDTO ruolo = ruoloCombo.getValue();
+
+            if (username == null || username.isBlank()
+                    || nome == null || nome.isBlank()
+                    || cognome == null || cognome.isBlank()
+                    || ruolo == null) {
+
+                errorLabel.setText("Compila tutti i campi prima di continuare.");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+
+            boolean ok = utenteService.updateUtente(
+                    utente.getId(),
+                    username,
+                    nome,
+                    cognome,
+                    ruolo,
+                    utente.isAttivo()
+            );
+
+            if (!ok) {
+                errorLabel.setText("Impossibile aggiornare l'utente.");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+
+            refreshTable();
+        });
+
+        dialog.showAndWait();
+    }
+    
+    private void showDisattivaConferma(UtenteDTO utente) {
+        String azione = utente.isAttivo() ? "disattivare" : "riattivare";
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Conferma");
+        alert.setHeaderText(null);
+        alert.setContentText("Vuoi davvero " + azione + " l'utente \"" + utente.getUsername() + "\"?");
+
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                boolean ok = utenteService.updateStatoUtente(utente.getId(), !utente.isAttivo());
+
+                if (ok) {
+                    refreshTable();
+                } else {
+                    Alert errore = new Alert(Alert.AlertType.ERROR);
+                    errore.setTitle("Errore");
+                    errore.setHeaderText(null);
+                    errore.setContentText("Operazione non riuscita.");
+                    errore.showAndWait();
+                }
+            }
+        });
+    }
+    
+    public UtentiView(String loggedUsername) {
+        this.loggedUsername = loggedUsername;
+    }
+    
+    private void applyRowStyle(TableRow<UtenteDTO> row, UtenteDTO item, boolean hovered) {
+        boolean isLoggedUser = item.getUsername() != null
+                && item.getUsername().equalsIgnoreCase(loggedUsername);
+
+        if (hovered) {
+            if (isLoggedUser) {
+                row.setStyle("""
+                    -fx-background-color: #ecfdf5;
+                    -fx-border-color: transparent transparent transparent #10b981;
+                    -fx-border-width: 0 0 0 4;
+                """);
+            } else {
+                row.setStyle("""
+                    -fx-background-color: #f8fafc;
+                    -fx-border-color: transparent;
+                """);
+            }
+        } else {
+            if (isLoggedUser) {
+                row.setStyle("""
+                    -fx-background-color: #f0fdf4;
+                    -fx-border-color: transparent transparent transparent #10b981;
+                    -fx-border-width: 0 0 0 4;
+                """);
+            } else {
+                row.setStyle("""
+                    -fx-background-color: white;
+                    -fx-border-color: transparent;
+                """);
+            }
+        }
     }
     
 }

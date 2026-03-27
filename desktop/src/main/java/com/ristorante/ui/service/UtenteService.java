@@ -38,7 +38,9 @@ public class UtenteService {
                         node.get("username").asText(),
                         node.get("nome").asText(),
                         node.get("cognome").asText(),
-                        node.get("ruolo").get("codice").asText()
+                        node.get("ruolo").get("codice").asText(),
+                        node.get("ruolo").get("id").asLong(),
+                        node.get("attivo").asBoolean()
                 ));
             }
 
@@ -105,8 +107,65 @@ public class UtenteService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() == 200 || response.statusCode() == 201;
+            return response.statusCode() >= 200 && response.statusCode() < 300;
 
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean updateUtente(Long id, String username, String nome, String cognome, RuoloDTO ruolo, boolean attivo) {
+        try {
+            String jsonInput = """
+                {
+                  "id": %d,
+                  "username": "%s",
+                  "ruolo": {
+                    "id": %d
+                  },
+                  "nome": "%s",
+                  "cognome": "%s",
+                  "attivo": %s
+                }
+                """.formatted(id, username, ruolo.getId(), nome, cognome, attivo);
+
+            HttpClient client = HttpClient.newHttpClient();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/utenti/" + id))
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            return response.statusCode() >= 200 && response.statusCode() < 300;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean updateStatoUtente(Long id, boolean attivo) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+
+            String jsonInput = """
+                {
+                  "attivo": %s
+                }
+                """.formatted(attivo);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/utenti/" + id + "/stato"))
+                    .header("Content-Type", "application/json")
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            return response.statusCode() >= 200 && response.statusCode() < 300;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

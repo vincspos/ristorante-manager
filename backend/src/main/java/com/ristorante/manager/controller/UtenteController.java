@@ -16,6 +16,10 @@ import com.ristorante.manager.dto.ErrorResponse;
 import com.ristorante.manager.dto.LoginRequest;
 import com.ristorante.manager.dto.LoginResponse;
 
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
+
 @RestController
 @RequestMapping("/api/utenti")
 public class UtenteController {
@@ -45,5 +49,16 @@ public class UtenteController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ErrorResponse("Credenziali non valide"));
         }
+    }
+    
+    @PutMapping("/{id}")
+    public Utente update(@PathVariable Long id, @RequestBody Utente utente) {
+        utente.setId(id);
+        return utenteService.update(utente);
+    }
+    
+    @PatchMapping("/{id}/stato")
+    public Utente updateStato(@PathVariable Long id, @RequestBody Utente utente) {
+        return utenteService.updateStato(id, utente.getAttivo());
     }
 }

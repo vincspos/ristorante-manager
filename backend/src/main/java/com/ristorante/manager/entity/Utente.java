@@ -21,10 +21,13 @@ public class Utente {
 	@JoinColumn(name = "ruolo_id", nullable = false)
 	private Ruolo ruolo;
 
+	@Column(nullable = false)
     private String nome;
 
+	@Column(nullable = false)
     private String cognome;
 
+	@Column(nullable = false)
     private Boolean attivo = true;
 
 	public Long getId() {
