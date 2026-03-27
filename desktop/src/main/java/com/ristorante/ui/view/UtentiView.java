@@ -29,6 +29,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.control.Tooltip;
 
 public class UtentiView {
 
@@ -51,8 +52,8 @@ public class UtentiView {
         Label subtitle = new Label("Visualizza e gestisci gli utenti del sistema");
         subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280;");
         
-        Label subtitle2 = new Label("In verde utente loggato");
-        subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280;");
+        Label subtitle2 = new Label("L'utente loggato è evidenziato in verde e non può essere disattivato");
+        subtitle2.setStyle("-fx-font-size: 12px; -fx-text-fill: #6b7280;");
 
         Button nuovoUtenteButton = new Button("+ Nuovo utente");
         nuovoUtenteButton.setPrefHeight(38);
@@ -264,15 +265,6 @@ public class UtentiView {
                 """);
 
                 disableButton.setPrefHeight(32);
-                disableButton.setStyle("""
-                    -fx-background-color: #dc2626;
-                    -fx-text-fill: white;
-                    -fx-font-size: 12px;
-                    -fx-font-weight: bold;
-                    -fx-background-radius: 8;
-                    -fx-cursor: hand;
-                    -fx-padding: 0 12 0 12;
-                """);
 
                 editButton.setOnAction(event -> {
                     UtenteDTO utente = getTableView().getItems().get(getIndex());
@@ -281,6 +273,14 @@ public class UtentiView {
 
                 disableButton.setOnAction(event -> {
                     UtenteDTO utente = getTableView().getItems().get(getIndex());
+
+                    boolean isLoggedUser = utente.getUsername() != null
+                            && utente.getUsername().equalsIgnoreCase(loggedUsername);
+
+                    if (isLoggedUser) {
+                        return;
+                    }
+
                     showDisattivaConferma(utente);
                 });
             }
@@ -289,33 +289,52 @@ public class UtentiView {
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
 
-                if (empty) {
+                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
                     setGraphic(null);
-                } else {
-                    UtenteDTO utente = getTableView().getItems().get(getIndex());
-                    disableButton.setText(utente.isAttivo() ? "Disattiva" : "Riattiva");
-                    disableButton.setStyle(utente.isAttivo()
-                            ? """
-                              -fx-background-color: #dc2626;
-                              -fx-text-fill: white;
-                              -fx-font-size: 12px;
-                              -fx-font-weight: bold;
-                              -fx-background-radius: 8;
-                              -fx-cursor: hand;
-                              -fx-padding: 0 12 0 12;
-                              """
-                            : """
-                              -fx-background-color: #0f766e;
-                              -fx-text-fill: white;
-                              -fx-font-size: 12px;
-                              -fx-font-weight: bold;
-                              -fx-background-radius: 8;
-                              -fx-cursor: hand;
-                              -fx-padding: 0 12 0 12;
-                              """
-                    );
-                    setGraphic(actionsBox);
+                    return;
                 }
+
+                UtenteDTO utente = getTableView().getItems().get(getIndex());
+
+                boolean isLoggedUser = utente.getUsername() != null
+                        && utente.getUsername().equalsIgnoreCase(loggedUsername);
+
+                if (isLoggedUser) {
+                    // SOLO MODIFICA
+                	HBox onlyEdit = new HBox(editButton);
+                	onlyEdit.setAlignment(Pos.CENTER);
+                	setGraphic(onlyEdit);
+                	return;
+                } else {
+                    // MODIFICA + DISATTIVA/RIATTIVA
+
+                    if (utente.isAttivo()) {
+                        disableButton.setText("Disattiva");
+                        disableButton.setStyle("""
+                            -fx-background-color: #dc2626;
+                            -fx-text-fill: white;
+                            -fx-font-size: 12px;
+                            -fx-font-weight: bold;
+                            -fx-background-radius: 8;
+                            -fx-cursor: hand;
+                            -fx-padding: 0 12 0 12;
+                        """);
+                    } else {
+                        disableButton.setText("Riattiva");
+                        disableButton.setStyle("""
+                            -fx-background-color: #0f766e;
+                            -fx-text-fill: white;
+                            -fx-font-size: 12px;
+                            -fx-font-weight: bold;
+                            -fx-background-radius: 8;
+                            -fx-cursor: hand;
+                            -fx-padding: 0 12 0 12;
+                        """);
+                    }
+                }
+
+                actionsBox.setAlignment(Pos.CENTER);
+                setGraphic(actionsBox);
             }
         });
 
