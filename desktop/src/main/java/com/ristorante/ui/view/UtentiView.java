@@ -40,6 +40,8 @@ public class UtentiView {
 
     private List<UtenteDTO> utentiCompleti = new ArrayList<>();
     
+    private final ComboBox<String> statoFilter = new ComboBox<>();
+    
     private final String loggedUsername;
 
     public VBox build() {
@@ -145,6 +147,51 @@ public class UtentiView {
         colRuolo.setCellValueFactory(new PropertyValueFactory<>("ruolo"));
         colRuolo.setStyle("-fx-alignment: CENTER;");
         
+        TableColumn<UtenteDTO, Boolean> colStato = new TableColumn<>("Stato");
+        colStato.setCellValueFactory(new PropertyValueFactory<>("attivo"));
+        colStato.setStyle("-fx-alignment: CENTER;");
+        
+        colStato.setCellFactory(column -> new TableCell<>() {
+            private final HBox wrapper = new HBox();
+            private final Label badge = new Label();
+
+            {
+                wrapper.setAlignment(Pos.CENTER);
+                badge.setPadding(new Insets(4, 10, 4, 10));
+                badge.setFont(Font.font("System", FontWeight.BOLD, 11));
+                badge.setTextFill(Color.WHITE);
+                wrapper.getChildren().add(badge);
+            }
+
+            @Override
+            protected void updateItem(Boolean attivo, boolean empty) {
+                super.updateItem(attivo, empty);
+
+                if (empty || attivo == null) {
+                    setGraphic(null);
+                    return;
+                }
+
+                if (attivo) {
+                    badge.setText("ATTIVO");
+                    badge.setStyle("""
+                        -fx-background-color: #16a34a;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                } else {
+                    badge.setText("DISATTIVO");
+                    badge.setStyle("""
+                        -fx-background-color: #6b7280;
+                        -fx-background-radius: 999;
+                        -fx-text-fill: white;
+                    """);
+                }
+
+                setGraphic(wrapper);
+            }
+        });
+        
         TableColumn<UtenteDTO, Void> colAzioni = new TableColumn<>("Azioni");
         colAzioni.setPrefWidth(220);
         colAzioni.setMinWidth(220);
@@ -152,10 +199,11 @@ public class UtentiView {
         colAzioni.setResizable(false);
         colAzioni.setStyle("-fx-alignment: CENTER;");
 
-        colUsername.prefWidthProperty().bind(table.widthProperty().multiply(0.26));
-        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.20));
-        colCognome.prefWidthProperty().bind(table.widthProperty().multiply(0.22));
-        colRuolo.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
+        colUsername.prefWidthProperty().bind(table.widthProperty().multiply(0.24));
+        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.18));
+        colCognome.prefWidthProperty().bind(table.widthProperty().multiply(0.20));
+        colRuolo.prefWidthProperty().bind(table.widthProperty().multiply(0.12));
+        colStato.prefWidthProperty().bind(table.widthProperty().multiply(0.12));
 
         colRuolo.setCellFactory(column -> new TableCell<>() {
             private final HBox wrapper = new HBox();
@@ -271,7 +319,7 @@ public class UtentiView {
             }
         });
 
-        table.getColumns().setAll( colUsername, colNome, colCognome, colRuolo, colAzioni);
+        table.getColumns().setAll( colUsername, colNome, colCognome, colRuolo, colStato, colAzioni);
     }
 
     private void refreshTable() {
@@ -477,6 +525,17 @@ public class UtentiView {
             -fx-background-radius: 10;
             -fx-font-size: 14px;
         """);
+        
+        statoFilter.getItems().addAll("Tutti", "Attivi", "Disattivi");
+        statoFilter.setValue("Tutti");
+        statoFilter.setPrefHeight(42);
+        statoFilter.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-font-size: 14px;
+        """);
 
         Button aggiornaButton = new Button("Aggiorna");
         aggiornaButton.setPrefHeight(42);
@@ -495,10 +554,12 @@ public class UtentiView {
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
 
         ruoloFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+        
+        statoFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilters());
 
         aggiornaButton.setOnAction(e -> refreshData());
 
-        HBox filtersBar = new HBox(12, searchField, ruoloFilter, aggiornaButton);
+        HBox filtersBar = new HBox(12, searchField, ruoloFilter, statoFilter, aggiornaButton);
         filtersBar.setAlignment(Pos.CENTER_LEFT);
 
         return filtersBar;
@@ -550,6 +611,8 @@ public class UtentiView {
                 : searchField.getText().trim().toLowerCase();
 
         String ruoloSelezionato = ruoloFilter.getValue();
+        
+        String statoSelezionato = statoFilter.getValue();
 
         List<UtenteDTO> filtrati = utentiCompleti.stream()
                 .filter(u -> {
@@ -563,8 +626,14 @@ public class UtentiView {
                             ruoloSelezionato == null
                                     || ruoloSelezionato.equals("Tutti i ruoli")
                                     || ruoloSelezionato.equalsIgnoreCase(u.getRuolo());
+                    
+                    boolean matchStato =
+                            statoSelezionato == null
+                                    || statoSelezionato.equals("Tutti")
+                                    || (statoSelezionato.equals("Attivi") && Boolean.TRUE.equals(u.isAttivo()))
+                                    || (statoSelezionato.equals("Disattivi") && Boolean.FALSE.equals(u.isAttivo()));
 
-                    return matchRicerca && matchRuolo;
+                    return matchRicerca && matchRuolo && matchStato;
                 })
                 .toList();
 
