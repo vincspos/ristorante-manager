@@ -587,23 +587,11 @@ public class UtentiView {
     private void loadInitialData() {
         utentiCompleti = new ArrayList<>(utenteService.loadUtenti());
         
-        utentiCompleti.sort((u1, u2) -> {
-            boolean firstIsLogged = u1.getUsername() != null && u1.getUsername().equalsIgnoreCase(loggedUsername);
-            boolean secondIsLogged = u2.getUsername() != null && u2.getUsername().equalsIgnoreCase(loggedUsername);
-
-            if (firstIsLogged && !secondIsLogged) return -1;
-            if (!firstIsLogged && secondIsLogged) return 1;
-            return 0;
-        });
+        sortUtentiList();
 
         ruoloFilter.getItems().clear();
         ruoloFilter.getItems().add("Tutti i ruoli");
-        ruoloFilter.getItems().addAll(
-                utenteService.loadRuoli()
-                        .stream()
-                        .map(RuoloDTO::getCodice)
-                        .toList()
-        );
+        ruoloFilter.getItems().addAll(utenteService.loadRuoli().stream().map(RuoloDTO::getCodice).toList());
         ruoloFilter.setValue("Tutti i ruoli");
 
         applyFilters();
@@ -612,14 +600,7 @@ public class UtentiView {
     private void refreshData() {
         utentiCompleti = new ArrayList<>(utenteService.loadUtenti());
         
-        utentiCompleti.sort((u1, u2) -> {
-            boolean firstIsLogged = u1.getUsername() != null && u1.getUsername().equalsIgnoreCase(loggedUsername);
-            boolean secondIsLogged = u2.getUsername() != null && u2.getUsername().equalsIgnoreCase(loggedUsername);
-
-            if (firstIsLogged && !secondIsLogged) return -1;
-            if (!firstIsLogged && secondIsLogged) return 1;
-            return 0;
-        });
+        sortUtentiList();
         
         applyFilters();
     }
@@ -844,6 +825,34 @@ public class UtentiView {
                 """);
             }
         }
+    }
+    
+    private void sortUtentiList() {
+        utentiCompleti.sort((u1, u2) -> {
+            boolean firstIsLogged = u1.getUsername() != null && u1.getUsername().equalsIgnoreCase(loggedUsername);
+            boolean secondIsLogged = u2.getUsername() != null && u2.getUsername().equalsIgnoreCase(loggedUsername);
+
+            if (firstIsLogged && !secondIsLogged) {
+                return -1;
+            }
+
+            if (!firstIsLogged && secondIsLogged) {
+                return 1;
+            }
+
+            String username1 = u1.getUsername() != null ? u1.getUsername().trim().toLowerCase() : "";
+            String username2 = u2.getUsername() != null ? u2.getUsername().trim().toLowerCase() : "";
+
+            int usernameCompare = username1.compareTo(username2);
+            if (usernameCompare != 0) {
+                return usernameCompare;
+            }
+
+            String nome1 = u1.getNome() != null ? u1.getNome().trim().toLowerCase() : "";
+            String nome2 = u2.getNome() != null ? u2.getNome().trim().toLowerCase() : "";
+
+            return nome1.compareTo(nome2);
+        });
     }
     
 }
