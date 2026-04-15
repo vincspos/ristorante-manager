@@ -1,6 +1,7 @@
 package com.ristorante.manager.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -25,5 +26,16 @@ public class RuoloController {
     @PostMapping
     public Ruolo create(@RequestBody Ruolo ruolo) {
         return ruoloService.save(ruolo);
+    }
+    
+    @PutMapping("/{id}")
+    public Ruolo update(@PathVariable Long id, @RequestBody Ruolo ruolo) {
+        return ruoloService.update(id, ruolo);
+    }
+
+    @PatchMapping("/{id}/stato")
+    public Ruolo updateStato(@PathVariable Long id, @RequestBody Map<String, Boolean> payload) {
+        Boolean attivo = payload.get("attivo");
+        return ruoloService.updateStato(id, attivo);
     }
 }

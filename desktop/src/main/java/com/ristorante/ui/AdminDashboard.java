@@ -1,6 +1,7 @@
 package com.ristorante.ui;
 
 import com.ristorante.ui.view.DashboardHomeView;
+import com.ristorante.ui.view.RuoliView;
 import com.ristorante.ui.view.UtentiView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -77,6 +78,7 @@ public class AdminDashboard {
             switch (text) {
                 case "Dashboard" -> contentArea.getChildren().setAll(new DashboardHomeView().build(username));
                 case "Utenti" -> contentArea.getChildren().setAll(new UtentiView(username).build());
+                case "Ruoli" -> contentArea.getChildren().setAll(new RuoliView().build());
                 default -> contentArea.getChildren().setAll(buildPlaceholder(text));
             }
         });

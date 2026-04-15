@@ -23,5 +23,27 @@ public class RuoloService {
     public Ruolo save(Ruolo ruolo) {
         return ruoloRepository.save(ruolo);
     }
+    
+    public Ruolo update(Long id, Ruolo ruoloAggiornato) {
+        Ruolo ruolo = ruoloRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ruolo non trovato con id: " + id));
+
+        ruolo.setCodice(ruoloAggiornato.getCodice());
+        ruolo.setDescrizione(ruoloAggiornato.getDescrizione());
+
+        if (ruoloAggiornato.getAttivo() != null) {
+            ruolo.setAttivo(ruoloAggiornato.getAttivo());
+        }
+
+        return ruoloRepository.save(ruolo);
+    }
+
+    public Ruolo updateStato(Long id, Boolean attivo) {
+        Ruolo ruolo = ruoloRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ruolo non trovato con id: " + id));
+
+        ruolo.setAttivo(attivo);
+        return ruoloRepository.save(ruolo);
+    }
 
 }

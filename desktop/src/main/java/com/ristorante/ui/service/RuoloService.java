@@ -2,7 +2,6 @@ package com.ristorante.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ristorante.ui.model.RuoloDTO;
-import com.ristorante.ui.model.UtenteDTO;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -12,44 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UtenteService {
+public class RuoloService {
 
     private static final String BASE_URL = "http://localhost:8081/api";
-
-    public List<UtenteDTO> loadUtenti() {
-        List<UtenteDTO> lista = new ArrayList<>();
-
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/utenti"))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            ObjectMapper mapper = new ObjectMapper();
-            var jsonList = mapper.readTree(response.body());
-
-            for (var node : jsonList) {
-                lista.add(new UtenteDTO(
-                        node.get("id").asLong(),
-                        node.get("username").asText(),
-                        node.get("nome").asText(),
-                        node.get("cognome").asText(),
-                        node.get("ruolo").get("codice").asText(),
-                        node.get("ruolo").get("id").asLong(),
-                        node.get("attivo").asBoolean()
-                ));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return lista;
-    }
 
     public List<RuoloDTO> loadRuoli() {
         List<RuoloDTO> lista = new ArrayList<>();
@@ -83,25 +47,20 @@ public class UtenteService {
         return lista;
     }
 
-    public boolean createUtente(String username, String password, String nome, String cognome, RuoloDTO ruolo) {
+    public boolean createRuolo(String codice, String descrizione) {
         try {
             String jsonInput = """
                 {
-                  "username": "%s",
-                  "password": "%s",
-                  "ruolo": {
-                    "id": %d
-                  },
-                  "nome": "%s",
-                  "cognome": "%s",
+                  "codice": "%s",
+                  "descrizione": "%s",
                   "attivo": true
                 }
-                """.formatted(username, password, ruolo.getId(), nome, cognome);
+                """.formatted(codice, descrizione);
 
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/utenti"))
+                    .uri(URI.create(BASE_URL + "/ruoli"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
                     .build();
@@ -115,26 +74,22 @@ public class UtenteService {
             return false;
         }
     }
-    
-    public boolean updateUtente(Long id, String username, String nome, String cognome, RuoloDTO ruolo, boolean attivo) {
+
+    public boolean updateRuolo(Long id, String codice, String descrizione, boolean attivo) {
         try {
             String jsonInput = """
                 {
                   "id": %d,
-                  "username": "%s",
-                  "ruolo": {
-                    "id": %d
-                  },
-                  "nome": "%s",
-                  "cognome": "%s",
+                  "codice": "%s",
+                  "descrizione": "%s",
                   "attivo": %s
                 }
-                """.formatted(id, username, ruolo.getId(), nome, cognome, attivo);
+                """.formatted(id, codice, descrizione, attivo);
 
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/utenti/" + id))
+                    .uri(URI.create(BASE_URL + "/ruoli/" + id))
                     .header("Content-Type", "application/json")
                     .PUT(HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
                     .build();
@@ -142,13 +97,14 @@ public class UtenteService {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             return response.statusCode() >= 200 && response.statusCode() < 300;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
-    
-    public boolean updateStatoUtente(Long id, boolean attivo) {
+
+    public boolean updateStatoRuolo(Long id, boolean attivo) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -159,7 +115,7 @@ public class UtenteService {
                 """.formatted(attivo);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/utenti/" + id + "/stato"))
+                    .uri(URI.create(BASE_URL + "/ruoli/" + id + "/stato"))
                     .header("Content-Type", "application/json")
                     .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
                     .build();
@@ -167,6 +123,7 @@ public class UtenteService {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             return response.statusCode() >= 200 && response.statusCode() < 300;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
