@@ -32,11 +32,49 @@ public class UtenteService {
         if (utente.getRuolo() == null || utente.getRuolo().getId() == null) {
             throw new RuntimeException("Ruolo obbligatorio");
         }
+        
+        if (utente.getUsername() == null || utente.getUsername().isBlank()
+                || utente.getPassword() == null || utente.getPassword().isBlank()
+                || utente.getNome() == null || utente.getNome().isBlank()
+                || utente.getCognome() == null || utente.getCognome().isBlank()
+                || utente.getRuolo() == null) {
+            throw new RuntimeException("Compila tutti i campi obbligatori");
+        }
 
         Ruolo ruolo = ruoloRepository.findById(utente.getRuolo().getId())
                 .orElseThrow(() -> new RuntimeException("Ruolo non trovato"));
+        
+        if (Boolean.FALSE.equals(ruolo.getAttivo())) {
+            throw new RuntimeException("Non è possibile assegnare un ruolo disattivo");
+        }
 
         utente.setRuolo(ruolo);
+        
+        String usernameNormalizzato = utente.getUsername().trim();
+        String nomeNormalizzato = utente.getNome().trim();
+        String cognomeNormalizzato = utente.getCognome().trim();
+        String passwordNormalizzata = utente.getPassword().trim();
+        
+        if (usernameNormalizzato.length() < 3) {
+            throw new RuntimeException("Lo username deve contenere almeno 3 caratteri");
+        }
+
+        if (usernameNormalizzato.contains(" ")) {
+            throw new RuntimeException("Lo username non può contenere spazi");
+        }
+
+        if (passwordNormalizzata.length() < 6) {
+            throw new RuntimeException("La password deve contenere almeno 6 caratteri");
+        }
+        
+        if (utenteRepository.findByUsername(usernameNormalizzato).isPresent()) {
+            throw new RuntimeException("Username già esistente");
+        }
+        
+        utente.setUsername(usernameNormalizzato);
+        utente.setNome(nomeNormalizzato);
+        utente.setCognome(cognomeNormalizzato);
+        utente.setPassword(passwordNormalizzata);
 
         return utenteRepository.save(utente);
     }
@@ -46,14 +84,47 @@ public class UtenteService {
         Utente esistente = utenteRepository.findById(utente.getId())
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
-        esistente.setUsername(utente.getUsername());
-        esistente.setNome(utente.getNome());
-        esistente.setCognome(utente.getCognome());
+        if (utente.getUsername() == null || utente.getUsername().isBlank()
+                || utente.getNome() == null || utente.getNome().isBlank()
+                || utente.getCognome() == null || utente.getCognome().isBlank()
+                || utente.getRuolo() == null
+                || utente.getRuolo().getId() == null) {
+            throw new RuntimeException("Compila tutti i campi obbligatori");
+        }
 
-        if (utente.getRuolo() != null && utente.getRuolo().getId() != null) {
-            Ruolo ruolo = ruoloRepository.findById(utente.getRuolo().getId())
-                    .orElseThrow(() -> new RuntimeException("Ruolo non trovato"));
-            esistente.setRuolo(ruolo);
+        String usernameNormalizzato = utente.getUsername().trim();
+        String nomeNormalizzato = utente.getNome().trim();
+        String cognomeNormalizzato = utente.getCognome().trim();
+
+        if (usernameNormalizzato.length() < 3) {
+            throw new RuntimeException("Lo username deve contenere almeno 3 caratteri");
+        }
+
+        if (usernameNormalizzato.contains(" ")) {
+            throw new RuntimeException("Lo username non può contenere spazi");
+        }
+
+        utenteRepository.findByUsername(usernameNormalizzato)
+                .ifPresent(trovato -> {
+                    if (!trovato.getId().equals(esistente.getId())) {
+                        throw new RuntimeException("Username già esistente");
+                    }
+                });
+
+        Ruolo ruolo = ruoloRepository.findById(utente.getRuolo().getId())
+                .orElseThrow(() -> new RuntimeException("Ruolo non trovato"));
+        
+        if (Boolean.FALSE.equals(ruolo.getAttivo())) {
+            throw new RuntimeException("Non è possibile assegnare un ruolo disattivo");
+        }
+
+        esistente.setUsername(usernameNormalizzato);
+        esistente.setNome(nomeNormalizzato);
+        esistente.setCognome(cognomeNormalizzato);
+        esistente.setRuolo(ruolo);
+
+        if (utente.getAttivo() != null) {
+            esistente.setAttivo(utente.getAttivo());
         }
 
         return utenteRepository.save(esistente);

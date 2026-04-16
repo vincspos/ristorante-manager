@@ -10,7 +10,6 @@ import com.ristorante.ui.util.UiDialogs;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
@@ -31,7 +30,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.control.Tooltip;
 
 public class UtentiView {
 
@@ -432,6 +430,11 @@ public class UtentiView {
             String nome = nomeField.getText();
             String cognome = cognomeField.getText();
             RuoloDTO ruolo = ruoloCombo.getValue();
+            
+            String usernameNormalizzato = username != null ? username.trim() : "";
+            String nomeNormalizzato = nome != null ? nome.trim() : "";
+            String cognomeNormalizzato = cognome != null ? cognome.trim() : "";
+            String passwordNormalizzata = password != null ? password.trim() : "";
 
             if (username == null || username.isBlank()
                     || password == null || password.isBlank()
@@ -445,8 +448,32 @@ public class UtentiView {
                 event.consume();
                 return;
             }
+            
+            if (usernameNormalizzato.length() < 3) {
+                errorLabel.setText("Lo username deve contenere almeno 3 caratteri.");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
 
-            boolean ok = utenteService.createUtente(username, password, nome, cognome, ruolo);
+            if (passwordNormalizzata.length() < 6) {
+                errorLabel.setText("La password deve contenere almeno 6 caratteri.");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+
+            if (usernameNormalizzato.contains(" ")) {
+                errorLabel.setText("Lo username non può contenere spazi.");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+
+            boolean ok = utenteService.createUtente(usernameNormalizzato, passwordNormalizzata, nomeNormalizzato, cognomeNormalizzato, ruolo);
 
             if (!ok) {
                 errorLabel.setText("Impossibile creare l'utente. Verifica i dati o il backend.");
@@ -457,6 +484,7 @@ public class UtentiView {
             }
 
             refreshTable();
+            dialog.close();
 
             UiDialogs.showSuccess(
                     "Successo",
@@ -731,6 +759,10 @@ public class UtentiView {
             String nome = nomeField.getText();
             String cognome = cognomeField.getText();
             RuoloDTO ruolo = ruoloCombo.getValue();
+            
+            String usernameNormalizzato = username != null ? username.trim() : "";
+            String nomeNormalizzato = nome != null ? nome.trim() : "";
+            String cognomeNormalizzato = cognome != null ? cognome.trim() : "";
 
             if (username == null || username.isBlank()
                     || nome == null || nome.isBlank()
@@ -744,11 +776,27 @@ public class UtentiView {
                 return;
             }
 
+            if (usernameNormalizzato.length() < 3) {
+                errorLabel.setText("Lo username deve contenere almeno 3 caratteri.");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+
+            if (usernameNormalizzato.contains(" ")) {
+                errorLabel.setText("Lo username non può contenere spazi.");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            
             boolean ok = utenteService.updateUtente(
                     utente.getId(),
-                    username,
-                    nome,
-                    cognome,
+                    usernameNormalizzato,
+                    nomeNormalizzato,
+                    cognomeNormalizzato,
                     ruolo,
                     utente.isAttivo()
             );
