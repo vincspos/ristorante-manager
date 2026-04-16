@@ -10,5 +10,7 @@ import com.ristorante.manager.entity.Utente;
 public interface UtenteRepository extends JpaRepository<Utente, Long> {
 	
 	Optional<Utente> findByUsername(String username);
+	
+	long countByRuoloId(Long ruoloId);
 
 }

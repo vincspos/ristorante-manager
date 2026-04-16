@@ -6,6 +6,8 @@ import java.util.List;
 import com.ristorante.ui.model.RuoloDTO;
 import com.ristorante.ui.model.UtenteDTO;
 import com.ristorante.ui.service.UtenteService;
+import com.ristorante.ui.util.UiDialogs;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
@@ -456,11 +458,11 @@ public class UtentiView {
 
             refreshTable();
 
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Successo");
-            alert.setHeaderText(null);
-            alert.setContentText("Utente creato correttamente.");
-            alert.showAndWait();
+            UiDialogs.showSuccess(
+                    "Successo",
+                    "Utente creato",
+                    "L'utente è stato creato correttamente."
+            );
         });
 
         dialog.showAndWait();
@@ -760,34 +762,40 @@ public class UtentiView {
             }
 
             refreshTable();
+            dialog.close();
+            
+            UiDialogs.showSuccess(
+                    "Successo",
+                    "Utente aggiornato",
+                    "L'utente è stato aggiornato correttamente."
+            );
         });
 
         dialog.showAndWait();
     }
     
     private void showDisattivaConferma(UtenteDTO utente) {
-        String azione = utente.isAttivo() ? "disattivare" : "riattivare";
+    	String azione = utente.isAttivo() ? "disattivare" : "riattivare";
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Conferma");
-        alert.setHeaderText(null);
-        alert.setContentText("Vuoi davvero " + azione + " l'utente \"" + utente.getUsername() + "\"?");
+    	boolean confermato = UiDialogs.showConfirm(
+    	        "Conferma",
+    	        "Cambio stato utente",
+    	        "Vuoi davvero " + azione + " l'utente \"" + utente.getUsername() + "\"?"
+    	);
 
-        alert.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                boolean ok = utenteService.updateStatoUtente(utente.getId(), !utente.isAttivo());
+    	if (confermato) {
+    	    boolean ok = utenteService.updateStatoUtente(utente.getId(), !utente.isAttivo());
 
-                if (ok) {
-                    refreshTable();
-                } else {
-                    Alert errore = new Alert(Alert.AlertType.ERROR);
-                    errore.setTitle("Errore");
-                    errore.setHeaderText(null);
-                    errore.setContentText("Operazione non riuscita.");
-                    errore.showAndWait();
-                }
-            }
-        });
+    	    if (ok) {
+    	        refreshTable();
+    	    } else {
+    	        UiDialogs.showError(
+    	                "Errore",
+    	                "Operazione non riuscita",
+    	                "Non è stato possibile aggiornare lo stato dell'utente."
+    	        );
+    	    }
+    	}
     }
     
     public UtentiView(String loggedUsername) {

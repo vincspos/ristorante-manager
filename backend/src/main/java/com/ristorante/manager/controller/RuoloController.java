@@ -38,4 +38,9 @@ public class RuoloController {
         Boolean attivo = payload.get("attivo");
         return ruoloService.updateStato(id, attivo);
     }
+    
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        ruoloService.delete(id);
+    }
 }

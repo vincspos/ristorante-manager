@@ -1,5 +1,7 @@
 package com.ristorante.ui;
 
+import com.ristorante.ui.view.ArticoliView;
+import com.ristorante.ui.view.CategorieArticoliView;
 import com.ristorante.ui.view.DashboardHomeView;
 import com.ristorante.ui.view.RuoliView;
 import com.ristorante.ui.view.UtentiView;
@@ -9,6 +11,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -19,6 +22,10 @@ public class AdminDashboard {
 
     private final List<Button> menuButtons = new ArrayList<>();
 
+    private VBox contentArea;
+    private VBox articoliSubMenu;
+    private boolean articoliExpanded = false;
+
     public void show(Stage stage, String username) {
         VBox sidebar = new VBox(12);
         sidebar.setPadding(new Insets(20));
@@ -28,26 +35,42 @@ public class AdminDashboard {
         Label logo = new Label("Ristorante Manager");
         logo.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
 
-        VBox contentArea = new VBox(20);
+        contentArea = new VBox(20);
         contentArea.setPadding(new Insets(24));
         contentArea.setStyle("-fx-background-color: #f3f4f6;");
 
-        VBox menu = new VBox(10,
-                createMenuButton("Dashboard", contentArea, username),
-                createMenuButton("Utenti", contentArea, username),
-                createMenuButton("Ruoli", contentArea, username),
-                createMenuButton("Articoli", contentArea, username),
-                createMenuButton("Tavoli", contentArea, username),
-                createMenuButton("Ordini", contentArea, username),
-                createMenuButton("Asporto", contentArea, username),
-                createMenuButton("Domicilio", contentArea, username),
-                createMenuButton("Incassi", contentArea, username),
-                createMenuButton("Spese", contentArea, username),
-                createMenuButton("Report", contentArea, username)
+        VBox menu = new VBox(10);
+
+        Button dashboardButton = createMenuButton("Dashboard", username);
+        Button utentiButton = createMenuButton("Utenti", username);
+        Button ruoliButton = createMenuButton("Ruoli", username);
+
+        VBox articoliMenuGroup = buildArticoliMenuGroup();
+
+        Button tavoliButton = createMenuButton("Tavoli", username);
+        Button ordiniButton = createMenuButton("Ordini", username);
+        Button asportoButton = createMenuButton("Asporto", username);
+        Button domicilioButton = createMenuButton("Domicilio", username);
+        Button incassiButton = createMenuButton("Incassi", username);
+        Button speseButton = createMenuButton("Spese", username);
+        Button reportButton = createMenuButton("Report", username);
+
+        menu.getChildren().addAll(
+                dashboardButton,
+                utentiButton,
+                ruoliButton,
+                articoliMenuGroup,
+                tavoliButton,
+                ordiniButton,
+                asportoButton,
+                domicilioButton,
+                incassiButton,
+                speseButton,
+                reportButton
         );
 
         if (!menuButtons.isEmpty()) {
-            setActiveMenu(menuButtons.get(0));
+            setActiveMenu(dashboardButton);
         }
 
         sidebar.getChildren().addAll(logo, menu);
@@ -66,7 +89,35 @@ public class AdminDashboard {
         stage.show();
     }
 
-    private Button createMenuButton(String text, VBox contentArea, String username) {
+    private VBox buildArticoliMenuGroup() {
+        Button articoliButton = new Button("Articoli");
+        articoliButton.setMaxWidth(Double.MAX_VALUE);
+        articoliButton.setPrefHeight(40);
+        setMenuButtonStyle(articoliButton, false);
+
+        Button categorieArticoliButton = createSubMenuButton("Categorie articoli");
+        Button listaArticoliButton = createSubMenuButton("Lista articoli");
+
+        articoliSubMenu = new VBox(6, categorieArticoliButton, listaArticoliButton);
+        articoliSubMenu.setPadding(new Insets(0, 0, 0, 10));
+        articoliSubMenu.setVisible(false);
+        articoliSubMenu.setManaged(false);
+
+        articoliButton.setOnAction(e -> toggleArticoliSubMenu());
+
+        VBox wrapper = new VBox(6, articoliButton, articoliSubMenu);
+
+        menuButtons.add(articoliButton);
+        return wrapper;
+    }
+
+    private void toggleArticoliSubMenu() {
+        articoliExpanded = !articoliExpanded;
+        articoliSubMenu.setVisible(articoliExpanded);
+        articoliSubMenu.setManaged(articoliExpanded);
+    }
+
+    private Button createMenuButton(String text, String username) {
         Button button = new Button(text);
         button.setMaxWidth(Double.MAX_VALUE);
         button.setPrefHeight(40);
@@ -87,9 +138,35 @@ public class AdminDashboard {
         return button;
     }
 
+    private Button createSubMenuButton(String text) {
+        Button button = new Button(text);
+        button.setMaxWidth(Double.MAX_VALUE);
+        button.setPrefHeight(34);
+        setSubMenuButtonStyle(button, false);
+
+        button.setOnAction(e -> {
+            setActiveMenu(button);
+
+            switch (text) {
+                case "Categorie articoli" -> contentArea.getChildren().setAll(new CategorieArticoliView().build());
+                case "Lista articoli" -> contentArea.getChildren().setAll(new ArticoliView().build());
+                default -> contentArea.getChildren().setAll(buildPlaceholder(text));
+            }
+        });
+
+        menuButtons.add(button);
+        return button;
+    }
+
     private void setActiveMenu(Button activeButton) {
         for (Button button : menuButtons) {
-            setMenuButtonStyle(button, button == activeButton);
+            boolean isSubMenu = button.getPrefHeight() == 34;
+
+            if (isSubMenu) {
+                setSubMenuButtonStyle(button, button == activeButton);
+            } else {
+                setMenuButtonStyle(button, button == activeButton);
+            }
         }
     }
 
@@ -115,6 +192,32 @@ public class AdminDashboard {
                 -fx-cursor: hand;
                 -fx-background-radius: 10;
                 -fx-padding: 0 14 0 14;
+            """);
+        }
+    }
+
+    private void setSubMenuButtonStyle(Button button, boolean active) {
+        if (active) {
+            button.setStyle("""
+                -fx-background-color: #1f2937;
+                -fx-text-fill: white;
+                -fx-font-size: 13px;
+                -fx-font-weight: bold;
+                -fx-alignment: center-left;
+                -fx-cursor: hand;
+                -fx-background-radius: 8;
+                -fx-padding: 0 14 0 24;
+            """);
+        } else {
+            button.setStyle("""
+                -fx-background-color: transparent;
+                -fx-text-fill: #9ca3af;
+                -fx-font-size: 13px;
+                -fx-font-weight: normal;
+                -fx-alignment: center-left;
+                -fx-cursor: hand;
+                -fx-background-radius: 8;
+                -fx-padding: 0 14 0 24;
             """);
         }
     }

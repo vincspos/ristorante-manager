@@ -6,14 +6,17 @@ import org.springframework.stereotype.Service;
 
 import com.ristorante.manager.entity.Ruolo;
 import com.ristorante.manager.repository.RuoloRepository;
+import com.ristorante.manager.repository.UtenteRepository;
 
 @Service
 public class RuoloService {
 	
 	private final RuoloRepository ruoloRepository;
+	private final UtenteRepository utenteRepository;
 	
-	public RuoloService(RuoloRepository ruoloRepository) {
+	public RuoloService(RuoloRepository ruoloRepository, UtenteRepository utenteRepository) {
         this.ruoloRepository = ruoloRepository;
+        this.utenteRepository = utenteRepository;
     }
 
     public List<Ruolo> findAll() {
@@ -48,6 +51,22 @@ public class RuoloService {
 
         ruolo.setAttivo(attivo);
         return ruoloRepository.save(ruolo);
+    }
+    
+    public void delete(Long id) {
+        Ruolo ruolo = ruoloRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ruolo non trovato con id: " + id));
+
+        if ("ADMIN".equalsIgnoreCase(ruolo.getCodice())) {
+            throw new RuntimeException("Il ruolo ADMIN non può essere eliminato");
+        }
+
+        long utentiAssociati = utenteRepository.countByRuoloId(id);
+        if (utentiAssociati > 0) {
+            throw new RuntimeException("Impossibile eliminare il ruolo: è associato a uno o più utenti");
+        }
+
+        ruoloRepository.delete(ruolo);
     }
 
 }

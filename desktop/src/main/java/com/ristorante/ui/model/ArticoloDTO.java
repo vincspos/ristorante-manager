@@ -11,9 +11,18 @@ public class ArticoloDTO {
     private BigDecimal prezzo;
     private String categoria;
     private boolean attivo;
-
-    public ArticoloDTO() {
-    }
+    
+    public ArticoloDTO(Long id, String codice, String nome,
+            String descrizione, BigDecimal prezzo,
+            String categoria, boolean attivo) {
+		this.id = id;
+		this.codice = codice;
+		this.nome = nome;
+		this.descrizione = descrizione;
+		this.prezzo = prezzo;
+		this.categoria = categoria;
+		this.attivo = attivo;
+	}
 
     public Long getId() {
         return id;

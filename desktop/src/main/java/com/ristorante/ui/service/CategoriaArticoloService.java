@@ -1,7 +1,7 @@
 package com.ristorante.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ristorante.ui.model.RuoloDTO;
+import com.ristorante.ui.model.CategoriaArticoloDTO;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,18 +11,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RuoloService {
+public class CategoriaArticoloService {
 
     private static final String BASE_URL = "http://localhost:8081/api";
 
-    public List<RuoloDTO> loadRuoli() {
-        List<RuoloDTO> lista = new ArrayList<>();
+    public List<CategoriaArticoloDTO> loadCategorie() {
+        List<CategoriaArticoloDTO> lista = new ArrayList<>();
 
         try {
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/ruoli"))
+                    .uri(URI.create(BASE_URL + "/categorie-articoli"))
                     .GET()
                     .build();
 
@@ -32,10 +32,10 @@ public class RuoloService {
             var jsonList = mapper.readTree(response.body());
 
             for (var node : jsonList) {
-                lista.add(new RuoloDTO(
+                lista.add(new CategoriaArticoloDTO(
                         node.get("id").asLong(),
-                        node.get("codice").asText(),
-                        node.get("descrizione").asText(),
+                        node.get("nome").asText(),
+                        node.get("colore").asText(),
                         node.get("attivo").asBoolean()
                 ));
             }
@@ -47,20 +47,20 @@ public class RuoloService {
         return lista;
     }
 
-    public boolean createRuolo(String codice, String descrizione) {
+    public boolean createCategoria(String nome, String colore) {
         try {
             String jsonInput = """
                 {
-                  "codice": "%s",
-                  "descrizione": "%s",
+                  "nome": "%s",
+                  "colore": "%s",
                   "attivo": true
                 }
-                """.formatted(codice, descrizione);
+                """.formatted(nome, colore);
 
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/ruoli"))
+                    .uri(URI.create(BASE_URL + "/categorie-articoli"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
                     .build();
@@ -75,21 +75,21 @@ public class RuoloService {
         }
     }
 
-    public boolean updateRuolo(Long id, String codice, String descrizione, boolean attivo) {
+    public boolean updateCategoria(Long id, String nome, String colore, boolean attivo) {
         try {
             String jsonInput = """
                 {
                   "id": %d,
-                  "codice": "%s",
-                  "descrizione": "%s",
+                  "nome": "%s",
+                  "colore": "%s",
                   "attivo": %s
                 }
-                """.formatted(id, codice, descrizione, attivo);
+                """.formatted(id, nome, colore, attivo);
 
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/ruoli/" + id))
+                    .uri(URI.create(BASE_URL + "/categorie-articoli/" + id))
                     .header("Content-Type", "application/json")
                     .PUT(HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
                     .build();
@@ -104,7 +104,7 @@ public class RuoloService {
         }
     }
 
-    public boolean updateStatoRuolo(Long id, boolean attivo) {
+    public boolean updateStatoCategoria(Long id, boolean attivo) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -115,7 +115,7 @@ public class RuoloService {
                 """.formatted(attivo);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/ruoli/" + id + "/stato"))
+                    .uri(URI.create(BASE_URL + "/categorie-articoli/" + id + "/stato"))
                     .header("Content-Type", "application/json")
                     .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
                     .build();
@@ -129,13 +129,13 @@ public class RuoloService {
             return false;
         }
     }
-    
-    public boolean deleteRuolo(Long id) {
+
+    public boolean deleteCategoria(Long id) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/ruoli/" + id))
+                    .uri(URI.create(BASE_URL + "/categorie-articoli/" + id))
                     .DELETE()
                     .build();
 

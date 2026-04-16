@@ -1,54 +1,43 @@
 package com.ristorante.ui.view;
 
-import com.ristorante.ui.model.RuoloDTO;
-import com.ristorante.ui.service.RuoloService;
+import com.ristorante.ui.model.ArticoloDTO;
+import com.ristorante.ui.service.ArticoloService;
 import com.ristorante.ui.util.UiDialogs;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.DialogPane;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RuoliView {
+public class ArticoliView {
 
-    private final RuoloService ruoloService = new RuoloService();
+    private final ArticoloService articoloService = new ArticoloService();
 
-    private final TableView<RuoloDTO> table = new TableView<>();
+    private final TableView<ArticoloDTO> table = new TableView<>();
     private final TextField searchField = new TextField();
+    private final ComboBox<String> categoriaFilter = new ComboBox<>();
     private final ComboBox<String> statoFilter = new ComboBox<>();
 
-    private List<RuoloDTO> ruoliCompleti = new ArrayList<>();
+    private List<ArticoloDTO> articoliCompleti = new ArrayList<>();
 
     public VBox build() {
-        Label title = new Label("Gestione Ruoli");
+        Label title = new Label("Gestione Articoli");
         title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1f2937;");
 
-        Label subtitle = new Label("Visualizza, crea, modifica e attiva o disattiva i ruoli del sistema");
+        Label subtitle = new Label("Visualizza, crea, modifica e attiva o disattiva gli articoli del menu");
         subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #6b7280;");
 
-        Button nuovoRuoloButton = new Button("+ Nuovo ruolo");
-        nuovoRuoloButton.setPrefHeight(38);
-        nuovoRuoloButton.setStyle("""
+        Button nuovoArticoloButton = new Button("+ Nuovo articolo");
+        nuovoArticoloButton.setPrefHeight(38);
+        nuovoArticoloButton.setStyle("""
             -fx-background-color: #0f766e;
             -fx-text-fill: white;
             -fx-font-size: 13px;
@@ -62,14 +51,14 @@ public class RuoliView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.getChildren().addAll(new VBox(4, title, subtitle), spacer, nuovoRuoloButton);
+        topBar.getChildren().addAll(new VBox(4, title, subtitle), spacer, nuovoArticoloButton);
 
         HBox filtersBar = buildFiltersBar();
 
-        configureRuoliTable();
+        configureArticoliTable();
         loadInitialData();
 
-        nuovoRuoloButton.setOnAction(e -> showNuovoRuoloDialog());
+        nuovoArticoloButton.setOnAction(e -> showNuovoArticoloDialog());
 
         VBox tableCard = new VBox(table);
         tableCard.setPadding(new Insets(18));
@@ -86,7 +75,7 @@ public class RuoliView {
         return container;
     }
 
-    private void configureRuoliTable() {
+    private void configureArticoliTable() {
         table.setPrefHeight(520);
         table.setFixedCellSize(46);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -99,8 +88,8 @@ public class RuoliView {
             -fx-table-cell-border-color: #eef2f7;
             -fx-padding: 0;
         """);
-        
-        Label emptyLabel = new Label("Nessun ruolo trovato");
+
+        Label emptyLabel = new Label("Nessun articolo trovato");
         emptyLabel.setStyle("""
             -fx-text-fill: #6b7280;
             -fx-font-size: 14px;
@@ -110,7 +99,7 @@ public class RuoliView {
 
         table.setRowFactory(tv -> new TableRow<>() {
             @Override
-            protected void updateItem(RuoloDTO item, boolean empty) {
+            protected void updateItem(ArticoloDTO item, boolean empty) {
                 super.updateItem(item, empty);
 
                 if (empty || item == null) {
@@ -130,18 +119,39 @@ public class RuoliView {
             }
         });
 
-        TableColumn<RuoloDTO, String> colCodice = new TableColumn<>("Codice");
+        TableColumn<ArticoloDTO, String> colCodice = new TableColumn<>("Codice");
         colCodice.setCellValueFactory(new PropertyValueFactory<>("codice"));
         colCodice.setStyle("-fx-alignment: CENTER;");
 
-        TableColumn<RuoloDTO, String> colDescrizione = new TableColumn<>("Descrizione");
-        colDescrizione.setCellValueFactory(new PropertyValueFactory<>("descrizione"));
-        colDescrizione.setStyle("-fx-alignment: CENTER;");
+        TableColumn<ArticoloDTO, String> colNome = new TableColumn<>("Nome");
+        colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
+        colNome.setStyle("-fx-alignment: CENTER;");
 
-        TableColumn<RuoloDTO, Boolean> colStato = new TableColumn<>("Stato");
+        TableColumn<ArticoloDTO, String> colCategoria = new TableColumn<>("Categoria");
+        colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
+        colCategoria.setStyle("-fx-alignment: CENTER;");
+
+        TableColumn<ArticoloDTO, BigDecimal> colPrezzo = new TableColumn<>("Prezzo");
+        colPrezzo.setCellValueFactory(new PropertyValueFactory<>("prezzo"));
+        colPrezzo.setStyle("-fx-alignment: CENTER;");
+        colPrezzo.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(BigDecimal prezzo, boolean empty) {
+                super.updateItem(prezzo, empty);
+
+                if (empty || prezzo == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                setText("€ " + prezzo.setScale(2, java.math.RoundingMode.HALF_UP));
+            }
+        });
+
+        TableColumn<ArticoloDTO, Boolean> colStato = new TableColumn<>("Stato");
         colStato.setCellValueFactory(new PropertyValueFactory<>("attivo"));
         colStato.setStyle("-fx-alignment: CENTER;");
-
         colStato.setCellFactory(column -> new TableCell<>() {
             private final HBox wrapper = new HBox();
             private final Label badge = new Label();
@@ -183,18 +193,20 @@ public class RuoliView {
             }
         });
 
-        TableColumn<RuoloDTO, Void> colAzioni = new TableColumn<>("Azioni");
-        colAzioni.setPrefWidth(300);
-        colAzioni.setMinWidth(300);
-        colAzioni.setMaxWidth(300);
+        TableColumn<ArticoloDTO, Void> colAzioni = new TableColumn<>("Azioni");
+        colAzioni.setPrefWidth(220);
+        colAzioni.setMinWidth(220);
+        colAzioni.setMaxWidth(220);
         colAzioni.setResizable(false);
         colAzioni.setStyle("-fx-alignment: CENTER;");
 
-        colCodice.prefWidthProperty().bind(table.widthProperty().multiply(0.28));
-        colDescrizione.prefWidthProperty().bind(table.widthProperty().multiply(0.44));
-        colStato.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
+        colCodice.prefWidthProperty().bind(table.widthProperty().multiply(0.18));
+        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.28));
+        colCategoria.prefWidthProperty().bind(table.widthProperty().multiply(0.18));
+        colPrezzo.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
+        colStato.prefWidthProperty().bind(table.widthProperty().multiply(0.12));
 
-        colCodice.setCellFactory(column -> new TableCell<>() {
+        colCategoria.setCellFactory(column -> new TableCell<>() {
             private final HBox wrapper = new HBox();
             private final Label badge = new Label();
 
@@ -207,24 +219,25 @@ public class RuoliView {
             }
 
             @Override
-            protected void updateItem(String codice, boolean empty) {
-                super.updateItem(codice, empty);
+            protected void updateItem(String categoria, boolean empty) {
+                super.updateItem(categoria, empty);
 
-                if (empty || codice == null) {
+                if (empty || categoria == null) {
                     setGraphic(null);
                     setText(null);
                     return;
                 }
 
-                badge.setText(codice);
+                String categoriaUpper = categoria.trim().toUpperCase();
+                badge.setText(categoriaUpper);
 
-                switch (codice.toUpperCase()) {
-                    case "ADMIN" -> badge.setStyle("-fx-background-color: #0f766e; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "CASSA" -> badge.setStyle("-fx-background-color: #2563eb; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "SALA" -> badge.setStyle("-fx-background-color: #7c3aed; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "CUCINA" -> badge.setStyle("-fx-background-color: #ea580c; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "PIZZERIA" -> badge.setStyle("-fx-background-color: #dc2626; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "RIDER" -> badge.setStyle("-fx-background-color: #0891b2; -fx-background-radius: 999; -fx-text-fill: white;");
+                switch (categoriaUpper) {
+                    case "PIZZE" -> badge.setStyle("-fx-background-color: #dc2626; -fx-background-radius: 999; -fx-text-fill: white;");
+                    case "BEVANDE" -> badge.setStyle("-fx-background-color: #2563eb; -fx-background-radius: 999; -fx-text-fill: white;");
+                    case "DESSERT" -> badge.setStyle("-fx-background-color: #7c3aed; -fx-background-radius: 999; -fx-text-fill: white;");
+                    case "ANTIPASTI" -> badge.setStyle("-fx-background-color: #0891b2; -fx-background-radius: 999; -fx-text-fill: white;");
+                    case "PRIMI" -> badge.setStyle("-fx-background-color: #ea580c; -fx-background-radius: 999; -fx-text-fill: white;");
+                    case "SECONDI" -> badge.setStyle("-fx-background-color: #0f766e; -fx-background-radius: 999; -fx-text-fill: white;");
                     default -> badge.setStyle("-fx-background-color: #6b7280; -fx-background-radius: 999; -fx-text-fill: white;");
                 }
 
@@ -236,8 +249,7 @@ public class RuoliView {
         colAzioni.setCellFactory(param -> new TableCell<>() {
             private final Button editButton = new Button("Modifica");
             private final Button toggleButton = new Button("Disattiva");
-            private final Button deleteButton = new Button("Elimina");
-            private final HBox actionsBox = new HBox(8, editButton, toggleButton, deleteButton);
+            private final HBox actionsBox = new HBox(8, editButton, toggleButton);
 
             {
                 actionsBox.setAlignment(Pos.CENTER);
@@ -252,33 +264,17 @@ public class RuoliView {
                     -fx-cursor: hand;
                     -fx-padding: 0 12 0 12;
                 """);
-                
-                deleteButton.setPrefHeight(32);
-                deleteButton.setStyle("""
-                    -fx-background-color: #7f1d1d;
-                    -fx-text-fill: white;
-                    -fx-font-size: 12px;
-                    -fx-font-weight: bold;
-                    -fx-background-radius: 8;
-                    -fx-cursor: hand;
-                    -fx-padding: 0 12 0 12;
-                """);
 
                 toggleButton.setPrefHeight(32);
 
                 editButton.setOnAction(event -> {
-                    RuoloDTO ruolo = getTableView().getItems().get(getIndex());
-                    showModificaRuoloDialog(ruolo);
+                    ArticoloDTO articolo = getTableView().getItems().get(getIndex());
+                    showModificaArticoloDialog(articolo);
                 });
 
                 toggleButton.setOnAction(event -> {
-                    RuoloDTO ruolo = getTableView().getItems().get(getIndex());
-                    showCambioStatoConferma(ruolo);
-                });
-                
-                deleteButton.setOnAction(event -> {
-                    RuoloDTO ruolo = getTableView().getItems().get(getIndex());
-                    showEliminaRuoloConferma(ruolo);
+                    ArticoloDTO articolo = getTableView().getItems().get(getIndex());
+                    showCambioStatoConferma(articolo);
                 });
             }
 
@@ -291,19 +287,9 @@ public class RuoliView {
                     return;
                 }
 
-                RuoloDTO ruolo = getTableView().getItems().get(getIndex());
-                
-                boolean isAdminRole = ruolo.getCodice() != null
-                        && ruolo.getCodice().equalsIgnoreCase("ADMIN");
+                ArticoloDTO articolo = getTableView().getItems().get(getIndex());
 
-                if (isAdminRole) {
-                    HBox onlyEdit = new HBox(editButton);
-                    onlyEdit.setAlignment(Pos.CENTER);
-                    setGraphic(onlyEdit);
-                    return;
-                }
-
-                if (ruolo.isAttivo()) {
+                if (articolo.isAttivo()) {
                     toggleButton.setText("Disattiva");
                     toggleButton.setStyle("""
                         -fx-background-color: #dc2626;
@@ -331,12 +317,22 @@ public class RuoliView {
             }
         });
 
-        table.getColumns().setAll(colCodice, colDescrizione, colStato, colAzioni);
+        table.getColumns().setAll(colCodice, colNome, colCategoria, colPrezzo, colStato, colAzioni);
     }
 
     private HBox buildFiltersBar() {
-        styleTextField(searchField, "Cerca per codice o descrizione");
+        styleTextField(searchField, "Cerca per codice, nome o descrizione");
         searchField.setPrefWidth(320);
+
+        categoriaFilter.setPrefWidth(220);
+        categoriaFilter.setPrefHeight(42);
+        categoriaFilter.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-font-size: 14px;
+        """);
 
         statoFilter.getItems().addAll("Tutti", "Attivi", "Disattivi");
         statoFilter.setValue("Tutti");
@@ -365,25 +361,38 @@ public class RuoliView {
         """);
 
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+        categoriaFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         statoFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         aggiornaButton.setOnAction(e -> refreshData());
 
-        HBox filtersBar = new HBox(12, searchField, statoFilter, aggiornaButton);
+        HBox filtersBar = new HBox(12, searchField, categoriaFilter, statoFilter, aggiornaButton);
         filtersBar.setAlignment(Pos.CENTER_LEFT);
 
         return filtersBar;
     }
 
     private void loadInitialData() {
-        ruoliCompleti = new ArrayList<>(ruoloService.loadRuoli());
-        sortRuoliList();
+        articoliCompleti = new ArrayList<>(articoloService.loadArticoli());
+        sortArticoliList();
+
+        categoriaFilter.getItems().clear();
+        categoriaFilter.getItems().add("Tutte le categorie");
+        categoriaFilter.getItems().addAll(
+                articoliCompleti.stream()
+                        .map(ArticoloDTO::getCategoria)
+                        .filter(c -> c != null && !c.isBlank())
+                        .map(String::trim)
+                        .distinct()
+                        .sorted(String.CASE_INSENSITIVE_ORDER)
+                        .toList()
+        );
+        categoriaFilter.setValue("Tutte le categorie");
+
         applyFilters();
     }
 
     private void refreshData() {
-        ruoliCompleti = new ArrayList<>(ruoloService.loadRuoli());
-        sortRuoliList();
-        applyFilters();
+        loadInitialData();
     }
 
     private void refreshTable() {
@@ -395,22 +404,29 @@ public class RuoliView {
                 ? ""
                 : searchField.getText().trim().toLowerCase();
 
+        String categoriaSelezionata = categoriaFilter.getValue();
         String statoSelezionato = statoFilter.getValue();
 
-        List<RuoloDTO> filtrati = ruoliCompleti.stream()
-                .filter(r -> {
+        List<ArticoloDTO> filtrati = articoliCompleti.stream()
+                .filter(a -> {
                     boolean matchRicerca =
                             ricerca.isBlank()
-                                    || containsIgnoreCase(r.getCodice(), ricerca)
-                                    || containsIgnoreCase(r.getDescrizione(), ricerca);
+                                    || containsIgnoreCase(a.getCodice(), ricerca)
+                                    || containsIgnoreCase(a.getNome(), ricerca)
+                                    || containsIgnoreCase(a.getDescrizione(), ricerca);
+
+                    boolean matchCategoria =
+                            categoriaSelezionata == null
+                                    || categoriaSelezionata.equals("Tutte le categorie")
+                                    || categoriaSelezionata.equalsIgnoreCase(a.getCategoria());
 
                     boolean matchStato =
                             statoSelezionato == null
                                     || statoSelezionato.equals("Tutti")
-                                    || (statoSelezionato.equals("Attivi") && r.isAttivo())
-                                    || (statoSelezionato.equals("Disattivi") && !r.isAttivo());
+                                    || (statoSelezionato.equals("Attivi") && a.isAttivo())
+                                    || (statoSelezionato.equals("Disattivi") && !a.isAttivo());
 
-                    return matchRicerca && matchStato;
+                    return matchRicerca && matchCategoria && matchStato;
                 })
                 .toList();
 
@@ -421,9 +437,9 @@ public class RuoliView {
         return value != null && value.toLowerCase().contains(search);
     }
 
-    private void showNuovoRuoloDialog() {
+    private void showNuovoArticoloDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Nuovo ruolo");
+        dialog.setTitle("Nuovo articolo");
         dialog.setHeaderText(null);
 
         DialogPane dialogPane = dialog.getDialogPane();
@@ -435,19 +451,28 @@ public class RuoliView {
         """);
 
         TextField codiceField = new TextField();
-        styleTextField(codiceField, "Inserisci codice ruolo");
+        styleTextField(codiceField, "Inserisci codice articolo");
+
+        TextField nomeField = new TextField();
+        styleTextField(nomeField, "Inserisci nome articolo");
 
         TextField descrizioneField = new TextField();
-        styleTextField(descrizioneField, "Inserisci descrizione ruolo");
+        styleTextField(descrizioneField, "Inserisci descrizione");
 
-        Label title = new Label("Nuovo ruolo");
+        TextField prezzoField = new TextField();
+        styleTextField(prezzoField, "Inserisci prezzo");
+
+        TextField categoriaField = new TextField();
+        styleTextField(categoriaField, "Inserisci categoria");
+
+        Label title = new Label("Nuovo articolo");
         title.setStyle("""
             -fx-font-size: 22px;
             -fx-font-weight: bold;
             -fx-text-fill: #1f2937;
         """);
 
-        Label subtitle = new Label("Inserisci i dati del nuovo ruolo");
+        Label subtitle = new Label("Inserisci i dati del nuovo articolo");
         subtitle.setStyle("""
             -fx-font-size: 13px;
             -fx-text-fill: #6b7280;
@@ -465,20 +490,23 @@ public class RuoliView {
 
         VBox form = new VBox(10,
                 createFormLabel("Codice"), codiceField,
+                createFormLabel("Nome"), nomeField,
                 createFormLabel("Descrizione"), descrizioneField,
+                createFormLabel("Prezzo"), prezzoField,
+                createFormLabel("Categoria"), categoriaField,
                 errorLabel
         );
 
         VBox content = new VBox(18, new VBox(4, title, subtitle), form);
         content.setPadding(new Insets(24));
-        content.setPrefWidth(420);
+        content.setPrefWidth(440);
 
         dialogPane.setContent(content);
 
         Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
         Button cancelButton = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
 
-        okButton.setText("Crea ruolo");
+        okButton.setText("Crea articolo");
         cancelButton.setText("Annulla");
 
         okButton.setPrefWidth(140);
@@ -489,29 +517,45 @@ public class RuoliView {
 
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             String codice = codiceField.getText();
+            String nome = nomeField.getText();
             String descrizione = descrizioneField.getText();
-            
-            String codiceNormalizzato = codice != null
-                    ? codice.trim().toUpperCase()
-                    : "";
+            String prezzo = prezzoField.getText();
+            String categoria = categoriaField.getText();
+
+            String codiceNormalizzato = codice != null ? codice.trim().toUpperCase() : "";
+            String categoriaNormalizzata = categoria != null ? categoria.trim().toUpperCase() : "";
+            String prezzoNormalizzato = normalizePrezzo(prezzo);
 
             if (codice == null || codice.isBlank()
-                    || descrizione == null || descrizione.isBlank()) {
+                    || nome == null || nome.isBlank()
+                    || prezzo == null || prezzo.isBlank()
+                    || categoria == null || categoria.isBlank()) {
 
-                errorLabel.setText("Compila tutti i campi prima di continuare.");
+                errorLabel.setText("Compila tutti i campi obbligatori prima di continuare.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
                 event.consume();
                 return;
             }
 
-            boolean ok = ruoloService.createRuolo(
-            		codiceNormalizzato,
-                    descrizione.trim()
+            if (!isPrezzoValido(prezzoNormalizzato)) {
+                errorLabel.setText("Inserisci un prezzo valido, ad esempio 6.50");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+
+            boolean ok = articoloService.createArticolo(
+                    codiceNormalizzato,
+                    nome.trim(),
+                    descrizione != null ? descrizione.trim() : "",
+                    prezzoNormalizzato,
+                    categoriaNormalizzata
             );
 
             if (!ok) {
-                errorLabel.setText("Impossibile creare il ruolo. Verifica i dati o il backend.");
+                errorLabel.setText("Impossibile creare l'articolo. Verifica i dati o il backend.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
                 event.consume();
@@ -523,17 +567,17 @@ public class RuoliView {
 
             UiDialogs.showSuccess(
                     "Successo",
-                    "Ruolo creato",
-                    "Il ruolo è stato creato correttamente."
+                    "Articolo creato",
+                    "L'articolo è stato creato correttamente."
             );
         });
 
         dialog.showAndWait();
     }
 
-    private void showModificaRuoloDialog(RuoloDTO ruolo) {
+    private void showModificaArticoloDialog(ArticoloDTO articolo) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Modifica ruolo");
+        dialog.setTitle("Modifica articolo");
         dialog.setHeaderText(null);
 
         DialogPane dialogPane = dialog.getDialogPane();
@@ -544,20 +588,33 @@ public class RuoliView {
             -fx-border-radius: 18;
         """);
 
-        TextField codiceField = new TextField(ruolo.getCodice());
-        styleTextField(codiceField, "Inserisci codice ruolo");
+        TextField codiceField = new TextField(articolo.getCodice());
+        styleTextField(codiceField, "Inserisci codice articolo");
 
-        TextField descrizioneField = new TextField(ruolo.getDescrizione());
-        styleTextField(descrizioneField, "Inserisci descrizione ruolo");
+        TextField nomeField = new TextField(articolo.getNome());
+        styleTextField(nomeField, "Inserisci nome articolo");
 
-        Label title = new Label("Modifica ruolo");
+        TextField descrizioneField = new TextField(articolo.getDescrizione());
+        styleTextField(descrizioneField, "Inserisci descrizione");
+
+        TextField prezzoField = new TextField(
+                articolo.getPrezzo() != null
+                        ? articolo.getPrezzo().setScale(2, java.math.RoundingMode.HALF_UP).toString()
+                        : ""
+        );
+        styleTextField(prezzoField, "Inserisci prezzo");
+
+        TextField categoriaField = new TextField(articolo.getCategoria());
+        styleTextField(categoriaField, "Inserisci categoria");
+
+        Label title = new Label("Modifica articolo");
         title.setStyle("""
             -fx-font-size: 22px;
             -fx-font-weight: bold;
             -fx-text-fill: #1f2937;
         """);
 
-        Label subtitle = new Label("Aggiorna i dati del ruolo selezionato");
+        Label subtitle = new Label("Aggiorna i dati dell'articolo selezionato");
         subtitle.setStyle("""
             -fx-font-size: 13px;
             -fx-text-fill: #6b7280;
@@ -575,13 +632,16 @@ public class RuoliView {
 
         VBox form = new VBox(10,
                 createFormLabel("Codice"), codiceField,
+                createFormLabel("Nome"), nomeField,
                 createFormLabel("Descrizione"), descrizioneField,
+                createFormLabel("Prezzo"), prezzoField,
+                createFormLabel("Categoria"), categoriaField,
                 errorLabel
         );
 
         VBox content = new VBox(18, new VBox(4, title, subtitle), form);
         content.setPadding(new Insets(24));
-        content.setPrefWidth(420);
+        content.setPrefWidth(440);
 
         dialogPane.setContent(content);
 
@@ -599,31 +659,47 @@ public class RuoliView {
 
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             String codice = codiceField.getText();
+            String nome = nomeField.getText();
             String descrizione = descrizioneField.getText();
-            
-            String codiceNormalizzato = codice != null
-                    ? codice.trim().toUpperCase()
-                    : "";
+            String prezzo = prezzoField.getText();
+            String categoria = categoriaField.getText();
+
+            String codiceNormalizzato = codice != null ? codice.trim().toUpperCase() : "";
+            String categoriaNormalizzata = categoria != null ? categoria.trim().toUpperCase() : "";
+            String prezzoNormalizzato = normalizePrezzo(prezzo);
 
             if (codice == null || codice.isBlank()
-                    || descrizione == null || descrizione.isBlank()) {
+                    || nome == null || nome.isBlank()
+                    || prezzo == null || prezzo.isBlank()
+                    || categoria == null || categoria.isBlank()) {
 
-                errorLabel.setText("Compila tutti i campi prima di continuare.");
+                errorLabel.setText("Compila tutti i campi obbligatori prima di continuare.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
                 event.consume();
                 return;
             }
 
-            boolean ok = ruoloService.updateRuolo(
-                    ruolo.getId(),
+            if (!isPrezzoValido(prezzoNormalizzato)) {
+                errorLabel.setText("Inserisci un prezzo valido, ad esempio 6.50");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+
+            boolean ok = articoloService.updateArticolo(
+                    articolo.getId(),
                     codiceNormalizzato,
-                    descrizione.trim(),
-                    ruolo.isAttivo()
+                    nome.trim(),
+                    descrizione != null ? descrizione.trim() : "",
+                    prezzoNormalizzato,
+                    categoriaNormalizzata,
+                    articolo.isAttivo()
             );
 
             if (!ok) {
-                errorLabel.setText("Impossibile aggiornare il ruolo.");
+                errorLabel.setText("Impossibile aggiornare l'articolo.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
                 event.consume();
@@ -634,25 +710,25 @@ public class RuoliView {
             dialog.close();
             UiDialogs.showSuccess(
                     "Successo",
-                    "Ruolo aggiornato",
-                    "Il ruolo è stato aggiornato correttamente."
+                    "Articolo aggiornato",
+                    "L'articolo è stato aggiornato correttamente."
             );
         });
 
         dialog.showAndWait();
     }
 
-    private void showCambioStatoConferma(RuoloDTO ruolo) {
-    	String azione = ruolo.isAttivo() ? "disattivare" : "riattivare";
+    private void showCambioStatoConferma(ArticoloDTO articolo) {
+    	String azione = articolo.isAttivo() ? "disattivare" : "riattivare";
 
     	boolean confermato = UiDialogs.showConfirm(
     	        "Conferma",
-    	        "Cambio stato ruolo",
-    	        "Vuoi davvero " + azione + " il ruolo \"" + ruolo.getCodice() + "\"?"
+    	        "Cambio stato articolo",
+    	        "Vuoi davvero " + azione + " l'articolo \"" + articolo.getNome() + "\"?"
     	);
 
     	if (confermato) {
-    	    boolean ok = ruoloService.updateStatoRuolo(ruolo.getId(), !ruolo.isAttivo());
+    	    boolean ok = articoloService.updateStatoArticolo(articolo.getId(), !articolo.isAttivo());
 
     	    if (ok) {
     	        refreshTable();
@@ -660,58 +736,30 @@ public class RuoliView {
     	        UiDialogs.showError(
     	                "Errore",
     	                "Operazione non riuscita",
-    	                "Non è stato possibile aggiornare lo stato del ruolo."
+    	                "Non è stato possibile aggiornare lo stato dell'articolo."
     	        );
     	    }
     	}
     }
-    
-    private void showEliminaRuoloConferma(RuoloDTO ruolo) {
-        boolean confermato = UiDialogs.showConfirm(
-                "Conferma eliminazione",
-                "Elimina ruolo",
-                "Vuoi davvero eliminare il ruolo \"" + ruolo.getCodice() + "\"?"
-        );
 
-        if (confermato) {
-            boolean ok = ruoloService.deleteRuolo(ruolo.getId());
+    private void sortArticoliList() {
+        articoliCompleti.sort((a1, a2) -> {
+            String nome1 = a1.getNome() != null ? a1.getNome().trim().toLowerCase() : "";
+            String nome2 = a2.getNome() != null ? a2.getNome().trim().toLowerCase() : "";
 
-            if (ok) {
-                refreshTable();
-
-                UiDialogs.showSuccess(
-                        "Successo",
-                        "Ruolo eliminato",
-                        "Il ruolo è stato eliminato correttamente."
-                );
-            } else {
-                UiDialogs.showError(
-                        "Errore",
-                        "Eliminazione non riuscita",
-                        "Impossibile eliminare il ruolo. Verifica che non sia associato a utenti."
-                );
-            }
-        }
-    }
-
-    private void sortRuoliList() {
-        ruoliCompleti.sort((r1, r2) -> {
-            String codice1 = r1.getCodice() != null ? r1.getCodice().trim().toLowerCase() : "";
-            String codice2 = r2.getCodice() != null ? r2.getCodice().trim().toLowerCase() : "";
-
-            int codiceCompare = codice1.compareTo(codice2);
-            if (codiceCompare != 0) {
-                return codiceCompare;
+            int nomeCompare = nome1.compareTo(nome2);
+            if (nomeCompare != 0) {
+                return nomeCompare;
             }
 
-            String descrizione1 = r1.getDescrizione() != null ? r1.getDescrizione().trim().toLowerCase() : "";
-            String descrizione2 = r2.getDescrizione() != null ? r2.getDescrizione().trim().toLowerCase() : "";
+            String codice1 = a1.getCodice() != null ? a1.getCodice().trim().toLowerCase() : "";
+            String codice2 = a2.getCodice() != null ? a2.getCodice().trim().toLowerCase() : "";
 
-            return descrizione1.compareTo(descrizione2);
+            return codice1.compareTo(codice2);
         });
     }
 
-    private void applyRowStyle(TableRow<RuoloDTO> row, boolean hovered) {
+    private void applyRowStyle(TableRow<ArticoloDTO> row, boolean hovered) {
         if (hovered) {
             row.setStyle("""
                 -fx-background-color: #f8fafc;
@@ -775,5 +823,21 @@ public class RuoliView {
             -fx-cursor: hand;
             -fx-padding: 0 18 0 18;
         """);
+    }
+
+    private String normalizePrezzo(String prezzoInput) {
+        if (prezzoInput == null) {
+            return "";
+        }
+        return prezzoInput.trim().replace(",", ".");
+    }
+
+    private boolean isPrezzoValido(String prezzo) {
+        try {
+            BigDecimal value = new BigDecimal(prezzo);
+            return value.compareTo(BigDecimal.ZERO) >= 0;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
