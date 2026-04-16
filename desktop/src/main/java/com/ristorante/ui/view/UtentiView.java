@@ -371,7 +371,11 @@ public class UtentiView {
         styleTextField(cognomeField, "Inserisci cognome");
 
         ComboBox<RuoloDTO> ruoloCombo = new ComboBox<>();
-        ruoloCombo.getItems().addAll(utenteService.loadRuoli());
+        ruoloCombo.getItems().addAll(
+                utenteService.loadRuoli().stream()
+                        .filter(RuoloDTO::isAttivo)
+                        .toList()
+        );
         styleComboBox(ruoloCombo, "Seleziona ruolo");
 
         Label title = new Label("Nuovo utente");
@@ -697,13 +701,28 @@ public class UtentiView {
         styleTextField(cognomeField, "Inserisci cognome");
 
         ComboBox<RuoloDTO> ruoloCombo = new ComboBox<>();
-        ruoloCombo.getItems().addAll(utenteService.loadRuoli());
+
+        List<RuoloDTO> ruoli = utenteService.loadRuoli();
+
+        // carico SOLO ruoli attivi
+        ruoloCombo.getItems().addAll(
+                ruoli.stream()
+                        .filter(RuoloDTO::isAttivo)
+                        .toList()
+        );
+
         styleComboBox(ruoloCombo, "Seleziona ruolo");
 
-        ruoloCombo.getItems().stream()
+        // aggiungo anche il ruolo attuale se è disattivo
+        ruoli.stream()
                 .filter(r -> r.getId().equals(utente.getRuoloId()))
                 .findFirst()
-                .ifPresent(ruoloCombo::setValue);
+                .ifPresent(r -> {
+                    if (!ruoloCombo.getItems().contains(r)) {
+                        ruoloCombo.getItems().add(r);
+                    }
+                    ruoloCombo.setValue(r);
+                });
 
         Label title = new Label("Modifica utente");
         title.setStyle("""
