@@ -41,6 +41,10 @@ public class RuoloService {
     public Ruolo updateStato(Long id, Boolean attivo) {
         Ruolo ruolo = ruoloRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ruolo non trovato con id: " + id));
+        
+        if ("ADMIN".equalsIgnoreCase(ruolo.getCodice()) && Boolean.FALSE.equals(attivo)) {
+            throw new RuntimeException("Il ruolo ADMIN non può essere disattivato");
+        }
 
         ruolo.setAttivo(attivo);
         return ruoloRepository.save(ruolo);

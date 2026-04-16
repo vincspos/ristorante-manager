@@ -582,6 +582,10 @@ public class RuoliView {
         okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             String codice = codiceField.getText();
             String descrizione = descrizioneField.getText();
+            
+            String codiceNormalizzato = codice != null
+                    ? codice.trim().toUpperCase()
+                    : "";
 
             if (codice == null || codice.isBlank()
                     || descrizione == null || descrizione.isBlank()) {
@@ -595,7 +599,7 @@ public class RuoliView {
 
             boolean ok = ruoloService.updateRuolo(
                     ruolo.getId(),
-                    codice.trim().toUpperCase(),
+                    codiceNormalizzato,
                     descrizione.trim(),
                     ruolo.isAttivo()
             );
