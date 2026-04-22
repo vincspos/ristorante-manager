@@ -77,9 +77,19 @@ public class SchedaArticoloView {
         topBar.getChildren().addAll(new VBox(4, title, subtitle), spacer, backButton);
 
         TextField codiceField = new TextField();
-        codiceField.setDisable(true);
+        codiceField.setEditable(false);
+        codiceField.setFocusTraversable(false);
         styleTextField(codiceField, "Inserisci codice articolo");
         codiceField.setPromptText("Generato automaticamente");
+        codiceField.setStyle("""
+        	    -fx-background-color: #f9fafb;
+        	    -fx-border-color: #d1d5db;
+        	    -fx-border-radius: 10;
+        	    -fx-background-radius: 10;
+        	    -fx-padding: 0 12 0 12;
+        	    -fx-font-size: 14px;
+        	    -fx-text-fill: #6b7280;
+        	""");
 
         TextField nomeField = new TextField();
         styleTextField(nomeField, "Inserisci nome articolo");
@@ -134,6 +144,10 @@ public class SchedaArticoloView {
                         .filter(CategoriaArticoloDTO::isAttivo)
                         .toList()
         );
+        
+        if (!editMode && !categoriaCombo.getItems().isEmpty()) {
+            categoriaCombo.setValue(categoriaCombo.getItems().get(0));
+        }
 
         if (editMode && articolo != null) {
             codiceField.setText(articolo.getCodice());
@@ -189,77 +203,54 @@ public class SchedaArticoloView {
         cancelButton.setOnAction(e -> onBack.run());
 
         saveButton.setOnAction(e -> {
-            errorLabel.setVisible(false);
-            errorLabel.setManaged(false);
-
-            
-            String nome = nomeField.getText();
-            String descrizione = descrizioneArea.getText();
-            String prezzo = prezzoField.getText();
-            CategoriaArticoloDTO categoria = categoriaCombo.getValue();
-            Integer iva = ivaCombo.getValue();
-            boolean attivo = attivoCheck.isSelected();
-
-           
-            String nomeNormalizzato = nome != null ? nome.trim() : "";
-            String descrizioneNormalizzata = descrizione != null ? descrizione.trim() : "";
-            String prezzoNormalizzato = normalizePrezzo(prezzo);
-            
-
-            if (nomeNormalizzato.isBlank()
-                    || prezzoNormalizzato.isBlank()
-                    || categoria == null
-                    || iva == null) {
-                showInlineError(errorLabel, "Compila tutti i campi obbligatori prima di continuare.");
-                return;
-            }
-
-            if (!isPrezzoValido(prezzoNormalizzato)) {
-                showInlineError(errorLabel, "Inserisci un prezzo valido, ad esempio 6.50");
-                return;
-            }
-            
-            BigDecimal prezzoValue = new BigDecimal(prezzoNormalizzato);
-
-            boolean ok;
-            if (editMode && articolo != null) {
-            	ok = articoloService.updateArticolo(
-            	        articolo.getId(),
-            	        nomeNormalizzato,
-            	        descrizioneNormalizzata,
-            	        prezzoValue,
-            	        categoria.getId(),
-            	        iva,
-            	        attivo
-            	);
-            } else {
-            	ok = articoloService.createArticolo(
-            	        nomeNormalizzato,
-            	        descrizioneNormalizzata,
-            	        prezzoValue,
-            	        categoria.getId(),
-            	        iva
-            	);
-            }
-
-            if (!ok) {
-                showInlineError(errorLabel, editMode
-                        ? "Impossibile aggiornare l'articolo."
-                        : "Impossibile creare l'articolo.");
-                return;
-            }
-
-            UiDialogs.showSuccess(
-                    "Successo",
-                    editMode ? "Articolo aggiornato" : "Articolo creato",
-                    editMode
-                            ? "L'articolo è stato aggiornato correttamente."
-                            : "L'articolo è stato creato correttamente."
-            );
-
-            onBack.run();
-        });
-
+		    resetInlineError(errorLabel);
+		
+		    String nome = nomeField.getText();
+		    String descrizione = descrizioneArea.getText();
+		    String prezzo = prezzoField.getText();
+		    CategoriaArticoloDTO categoria = categoriaCombo.getValue();
+		    Integer iva = ivaCombo.getValue();
+		    boolean attivo = attivoCheck.isSelected();
+		
+		    String nomeNormalizzato = nome != null ? nome.trim() : "";
+		    String descrizioneNormalizzata = descrizione != null ? descrizione.trim() : "";
+		
+		    if (!validateNomeCategoriaIva(errorLabel, nomeNormalizzato, categoria, iva)) {
+		        return;
+		    }
+		
+		    BigDecimal prezzoValue = parsePrezzoOrShowError(errorLabel, prezzo);
+		    if (prezzoValue == null) {
+		        return;
+		    }
+		
+		    boolean ok = saveArticolo(
+		            nomeNormalizzato,
+		            descrizioneNormalizzata,
+		            prezzoValue,
+		            categoria,
+		            iva,
+		            attivo
+		    );
+		
+		    if (!ok) {
+		        showInlineError(errorLabel, editMode
+		                ? "Impossibile aggiornare l'articolo."
+		                : "Impossibile creare l'articolo.");
+		        return;
+		    }
+		
+		    UiDialogs.showSuccess(
+		            "Successo",
+		            editMode ? "Articolo aggiornato" : "Articolo creato",
+		            editMode
+		                    ? "L'articolo è stato aggiornato correttamente."
+		                    : "L'articolo è stato creato correttamente."
+		    );
+		
+		    onBack.run();
+		});
+        
         HBox actionsBar = new HBox(10, saveButton, cancelButton);
         actionsBar.setAlignment(Pos.CENTER_RIGHT);
 
@@ -273,6 +264,8 @@ public class SchedaArticoloView {
                 actionsBar
         );
         container.setPadding(new Insets(4, 0, 0, 0));
+        
+        javafx.application.Platform.runLater(nomeField::requestFocus);
 
         return container;
     }
@@ -440,4 +433,72 @@ public class SchedaArticoloView {
             return false;
         }
     }
+    
+    private void resetInlineError(Label errorLabel) {
+        errorLabel.setText("");
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
+    }
+
+    private boolean validateNomeCategoriaIva(Label errorLabel,
+                                             String nomeNormalizzato,
+                                             CategoriaArticoloDTO categoria,
+                                             Integer iva) {
+        if (nomeNormalizzato.isBlank()) {
+            showInlineError(errorLabel, "Inserisci il nome dell'articolo.");
+            return false;
+        }
+
+        if (categoria == null) {
+            showInlineError(errorLabel, "Seleziona una categoria.");
+            return false;
+        }
+
+        if (iva == null) {
+            showInlineError(errorLabel, "Seleziona l'IVA.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private BigDecimal parsePrezzoOrShowError(Label errorLabel, String prezzoInput) {
+        String prezzoNormalizzato = normalizePrezzo(prezzoInput);
+
+        if (prezzoNormalizzato.isBlank()) {
+            showInlineError(errorLabel, "Inserisci il prezzo dell'articolo.");
+            return null;
+        }
+
+        if (!isPrezzoValido(prezzoNormalizzato)) {
+            showInlineError(errorLabel, "Inserisci un prezzo valido, ad esempio 6.50");
+            return null;
+        }
+
+        return new BigDecimal(prezzoNormalizzato);
+    }
+    
+    private boolean saveArticolo(String nomeNormalizzato, String descrizioneNormalizzata, BigDecimal prezzoValue,
+            CategoriaArticoloDTO categoria,  Integer iva, boolean attivo) {
+    	
+		if (editMode && articolo != null) {
+			return articoloService.updateArticolo(
+				articolo.getId(),
+				nomeNormalizzato,
+				descrizioneNormalizzata,
+				prezzoValue,
+				categoria.getId(),
+				iva,
+				attivo
+			);
+		}
+		
+		return articoloService.createArticolo(
+			nomeNormalizzato,
+			descrizioneNormalizzata,
+			prezzoValue,
+			categoria.getId(),
+			iva
+		);
+	}
 }
