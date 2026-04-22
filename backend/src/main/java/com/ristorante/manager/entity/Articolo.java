@@ -28,6 +28,9 @@ public class Articolo {
 
     @Column(nullable = false)
     private Boolean attivo = true;
+    
+    @Column(nullable = false)
+    private Integer iva;
 
     // GETTER & SETTER
 
@@ -50,4 +53,7 @@ public class Articolo {
 
     public Boolean getAttivo() { return attivo; }
     public void setAttivo(Boolean attivo) { this.attivo = attivo; }
+    
+    public Integer getIva() {return iva;}
+    public void setIva(Integer iva) {this.iva = iva;}
 }

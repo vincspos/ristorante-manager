@@ -11,10 +11,11 @@ public class ArticoloDTO {
     private BigDecimal prezzo;
     private String categoria;
     private boolean attivo;
+    private Integer iva;
     
     public ArticoloDTO(Long id, String codice, String nome,
             String descrizione, BigDecimal prezzo,
-            String categoria, boolean attivo) {
+            String categoria, boolean attivo, Integer iva) {
 		this.id = id;
 		this.codice = codice;
 		this.nome = nome;
@@ -22,6 +23,7 @@ public class ArticoloDTO {
 		this.prezzo = prezzo;
 		this.categoria = categoria;
 		this.attivo = attivo;
+		this.iva = iva;
 	}
 
     public Long getId() {
@@ -79,4 +81,6 @@ public class ArticoloDTO {
     public void setAttivo(boolean attivo) {
         this.attivo = attivo;
     }
+    
+    public Integer getIva() { return iva; }
 }

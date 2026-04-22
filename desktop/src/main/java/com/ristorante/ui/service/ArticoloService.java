@@ -39,7 +39,8 @@ public class ArticoloService {
                         node.hasNonNull("descrizione") ? node.get("descrizione").asText() : "",
                         node.get("prezzo").decimalValue(),
                         node.get("categoria").asText(),
-                        node.get("attivo").asBoolean()
+                        node.get("attivo").asBoolean(),
+                        node.get("iva").asInt()
                 ));
             }
 
@@ -51,7 +52,7 @@ public class ArticoloService {
     }
 
     public boolean createArticolo(String codice, String nome, String descrizione,
-                                  String prezzo, String categoria) {
+                                  String prezzo, String categoria, Integer iva) {
         try {
             String jsonInput = """
                 {
@@ -60,9 +61,10 @@ public class ArticoloService {
                   "descrizione": "%s",
                   "prezzo": %s,
                   "categoria": "%s",
-                  "attivo": true
+                  "attivo": true,
+                  "iva": %s
                 }
-                """.formatted(codice, nome, descrizione, prezzo, categoria);
+                """.formatted(codice, nome, descrizione, prezzo, categoria, iva);
 
             HttpClient client = HttpClient.newHttpClient();
 
@@ -83,8 +85,8 @@ public class ArticoloService {
     }
 
     public boolean updateArticolo(Long id, String codice, String nome,
-                                 String descrizione, String prezzo,
-                                 String categoria, boolean attivo) {
+            String descrizione, String prezzo,
+            String categoria, Integer iva, boolean attivo) {
         try {
             String jsonInput = """
                 {
@@ -94,9 +96,10 @@ public class ArticoloService {
                   "descrizione": "%s",
                   "prezzo": %s,
                   "categoria": "%s",
-                  "attivo": %s
+                  "attivo": %s,
+                  "iva": %s
                 }
-                """.formatted(id, codice, nome, descrizione, prezzo, categoria, attivo);
+                """.formatted(id, codice, nome, descrizione, prezzo, categoria, attivo, iva);
 
             HttpClient client = HttpClient.newHttpClient();
 

@@ -3,6 +3,8 @@ package com.ristorante.ui.view;
 import com.ristorante.ui.model.ArticoloDTO;
 import com.ristorante.ui.service.ArticoloService;
 import com.ristorante.ui.util.UiDialogs;
+import com.ristorante.ui.model.CategoriaArticoloDTO;
+import com.ristorante.ui.service.CategoriaArticoloService;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,6 +22,7 @@ import java.util.List;
 public class ArticoliView {
 
     private final ArticoloService articoloService = new ArticoloService();
+    private final CategoriaArticoloService categoriaService = new CategoriaArticoloService();
 
     private final TableView<ArticoloDTO> table = new TableView<>();
     private final TextField searchField = new TextField();
@@ -461,9 +464,39 @@ public class ArticoliView {
 
         TextField prezzoField = new TextField();
         styleTextField(prezzoField, "Inserisci prezzo");
+        
+        ComboBox<Integer> ivaCombo = new ComboBox<>();
+        ivaCombo.getItems().addAll(4, 10, 22);
+        ivaCombo.setValue(10);
+        ivaCombo.setPromptText("Seleziona IVA");
+        ivaCombo.setPrefHeight(42);
+        ivaCombo.setMaxWidth(Double.MAX_VALUE);
+        ivaCombo.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-font-size: 14px;
+        """);
 
-        TextField categoriaField = new TextField();
-        styleTextField(categoriaField, "Inserisci categoria");
+        ComboBox<CategoriaArticoloDTO> categoriaCombo = new ComboBox<>();
+
+        categoriaCombo.getItems().addAll(
+                categoriaService.loadCategorie().stream()
+                        .filter(CategoriaArticoloDTO::isAttivo)
+                        .toList()
+        );
+
+        categoriaCombo.setPromptText("Seleziona categoria");
+        categoriaCombo.setPrefHeight(42);
+        categoriaCombo.setMaxWidth(Double.MAX_VALUE);
+        categoriaCombo.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-font-size: 14px;
+        """);
 
         Label title = new Label("Nuovo articolo");
         title.setStyle("""
@@ -493,7 +526,8 @@ public class ArticoliView {
                 createFormLabel("Nome"), nomeField,
                 createFormLabel("Descrizione"), descrizioneField,
                 createFormLabel("Prezzo"), prezzoField,
-                createFormLabel("Categoria"), categoriaField,
+                createFormLabel("IVA"), ivaCombo,
+                createFormLabel("Categoria"), categoriaCombo,
                 errorLabel
         );
 
@@ -520,16 +554,17 @@ public class ArticoliView {
             String nome = nomeField.getText();
             String descrizione = descrizioneField.getText();
             String prezzo = prezzoField.getText();
-            String categoria = categoriaField.getText();
+            Integer iva = ivaCombo.getValue();
+            CategoriaArticoloDTO categoria = categoriaCombo.getValue();
 
             String codiceNormalizzato = codice != null ? codice.trim().toUpperCase() : "";
-            String categoriaNormalizzata = categoria != null ? categoria.trim().toUpperCase() : "";
             String prezzoNormalizzato = normalizePrezzo(prezzo);
 
             if (codice == null || codice.isBlank()
                     || nome == null || nome.isBlank()
                     || prezzo == null || prezzo.isBlank()
-                    || categoria == null || categoria.isBlank()) {
+            		|| categoria == null
+                    || categoria == null ) {
 
                 errorLabel.setText("Compila tutti i campi obbligatori prima di continuare.");
                 errorLabel.setVisible(true);
@@ -551,7 +586,8 @@ public class ArticoliView {
                     nome.trim(),
                     descrizione != null ? descrizione.trim() : "",
                     prezzoNormalizzato,
-                    categoriaNormalizzata
+                    categoria.getNome(),
+                    iva
             );
 
             if (!ok) {
@@ -603,9 +639,52 @@ public class ArticoliView {
                         : ""
         );
         styleTextField(prezzoField, "Inserisci prezzo");
+        
+        ComboBox<Integer> ivaCombo = new ComboBox<>();
+        ivaCombo.getItems().addAll(4, 10, 22);
+        ivaCombo.setValue(articolo.getIva() != null ? articolo.getIva() : 10);
+        ivaCombo.setPromptText("Seleziona IVA");
+        ivaCombo.setPrefHeight(42);
+        ivaCombo.setMaxWidth(Double.MAX_VALUE);
+        ivaCombo.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-font-size: 14px;
+        """);
 
-        TextField categoriaField = new TextField(articolo.getCategoria());
-        styleTextField(categoriaField, "Inserisci categoria");
+        ComboBox<CategoriaArticoloDTO> categoriaCombo = new ComboBox<>();
+
+        List<CategoriaArticoloDTO> categorie = categoriaService.loadCategorie();
+
+        // solo attive
+        categoriaCombo.getItems().addAll(
+                categorie.stream()
+                        .filter(CategoriaArticoloDTO::isAttivo)
+                        .toList()
+        );
+
+        // aggiungi anche quella attuale se disattiva
+        categorie.stream()
+                .filter(c -> c.getNome().equalsIgnoreCase(articolo.getCategoria()))
+                .findFirst()
+                .ifPresent(c -> {
+                    if (!categoriaCombo.getItems().contains(c)) {
+                        categoriaCombo.getItems().add(c);
+                    }
+                    categoriaCombo.setValue(c);
+                });
+
+        categoriaCombo.setPrefHeight(42);
+        categoriaCombo.setMaxWidth(Double.MAX_VALUE);
+        categoriaCombo.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-font-size: 14px;
+        """);
 
         Label title = new Label("Modifica articolo");
         title.setStyle("""
@@ -635,7 +714,8 @@ public class ArticoliView {
                 createFormLabel("Nome"), nomeField,
                 createFormLabel("Descrizione"), descrizioneField,
                 createFormLabel("Prezzo"), prezzoField,
-                createFormLabel("Categoria"), categoriaField,
+                createFormLabel("IVA"), ivaCombo,
+                createFormLabel("Categoria"), categoriaCombo,
                 errorLabel
         );
 
@@ -662,16 +742,16 @@ public class ArticoliView {
             String nome = nomeField.getText();
             String descrizione = descrizioneField.getText();
             String prezzo = prezzoField.getText();
-            String categoria = categoriaField.getText();
+            Integer iva = ivaCombo.getValue();
+            CategoriaArticoloDTO categoria = categoriaCombo.getValue();
 
             String codiceNormalizzato = codice != null ? codice.trim().toUpperCase() : "";
-            String categoriaNormalizzata = categoria != null ? categoria.trim().toUpperCase() : "";
             String prezzoNormalizzato = normalizePrezzo(prezzo);
 
             if (codice == null || codice.isBlank()
                     || nome == null || nome.isBlank()
                     || prezzo == null || prezzo.isBlank()
-                    || categoria == null || categoria.isBlank()) {
+                    || categoria == null  || iva == null) {
 
                 errorLabel.setText("Compila tutti i campi obbligatori prima di continuare.");
                 errorLabel.setVisible(true);
@@ -694,7 +774,8 @@ public class ArticoliView {
                     nome.trim(),
                     descrizione != null ? descrizione.trim() : "",
                     prezzoNormalizzato,
-                    categoriaNormalizzata,
+                    categoria.getNome(),
+                    iva,
                     articolo.isAttivo()
             );
 

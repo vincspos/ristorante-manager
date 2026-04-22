@@ -29,4 +29,9 @@ public class CategoriaArticoloDTO {
     public boolean isAttivo() {
         return attivo;
     }
+    
+    @Override
+    public String toString() {
+        return nome;
+    }
 }
