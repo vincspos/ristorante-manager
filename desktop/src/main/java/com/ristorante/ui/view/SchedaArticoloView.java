@@ -77,7 +77,9 @@ public class SchedaArticoloView {
         topBar.getChildren().addAll(new VBox(4, title, subtitle), spacer, backButton);
 
         TextField codiceField = new TextField();
+        codiceField.setDisable(true);
         styleTextField(codiceField, "Inserisci codice articolo");
+        codiceField.setPromptText("Generato automaticamente");
 
         TextField nomeField = new TextField();
         styleTextField(nomeField, "Inserisci nome articolo");
@@ -190,7 +192,7 @@ public class SchedaArticoloView {
             errorLabel.setVisible(false);
             errorLabel.setManaged(false);
 
-            String codice = codiceField.getText();
+            
             String nome = nomeField.getText();
             String descrizione = descrizioneArea.getText();
             String prezzo = prezzoField.getText();
@@ -198,13 +200,12 @@ public class SchedaArticoloView {
             Integer iva = ivaCombo.getValue();
             boolean attivo = attivoCheck.isSelected();
 
-            String codiceNormalizzato = codice != null ? codice.trim().toUpperCase() : "";
+           
             String nomeNormalizzato = nome != null ? nome.trim() : "";
             String descrizioneNormalizzata = descrizione != null ? descrizione.trim() : "";
             String prezzoNormalizzato = normalizePrezzo(prezzo);
 
-            if (codiceNormalizzato.isBlank()
-                    || nomeNormalizzato.isBlank()
+            if (nomeNormalizzato.isBlank()
                     || prezzoNormalizzato.isBlank()
                     || categoria == null
                     || iva == null) {
@@ -220,8 +221,7 @@ public class SchedaArticoloView {
             boolean ok;
             if (editMode && articolo != null) {
                 ok = articoloService.updateArticolo(
-                        articolo.getId(),
-                        codiceNormalizzato,
+                		articolo.getId(),
                         nomeNormalizzato,
                         descrizioneNormalizzata,
                         prezzoNormalizzato,
@@ -231,7 +231,6 @@ public class SchedaArticoloView {
                 );
             } else {
                 ok = articoloService.createArticolo(
-                        codiceNormalizzato,
                         nomeNormalizzato,
                         descrizioneNormalizzata,
                         prezzoNormalizzato,
@@ -292,7 +291,7 @@ public class SchedaArticoloView {
 
         grid.getColumnConstraints().addAll(col1, col2);
 
-        VBox codiceBox = new VBox(6, createFormLabel("Codice *"), codiceField);
+        VBox codiceBox = new VBox(6, createFormLabel("Codice"), codiceField);
         VBox nomeBox = new VBox(6, createFormLabel("Nome *"), nomeField);
         VBox categoriaBox = new VBox(6, createFormLabel("Categoria *"), categoriaCombo);
         VBox descrizioneBox = new VBox(6, createFormLabel("Descrizione"), descrizioneArea);

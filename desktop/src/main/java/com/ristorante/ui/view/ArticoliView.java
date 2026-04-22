@@ -14,10 +14,12 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.Node;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ArticoliView {
 
@@ -30,6 +32,12 @@ public class ArticoliView {
     private final ComboBox<String> statoFilter = new ComboBox<>();
 
     private List<ArticoloDTO> articoliCompleti = new ArrayList<>();
+    
+    private final Consumer<Node> navigator;
+
+    public ArticoliView(Consumer<Node> navigator) {
+        this.navigator = navigator;
+    }
 
     public VBox build() {
         Label title = new Label("Gestione Articoli");
@@ -61,7 +69,11 @@ public class ArticoliView {
         configureArticoliTable();
         loadInitialData();
 
-        nuovoArticoloButton.setOnAction(e -> showNuovoArticoloDialog());
+        nuovoArticoloButton.setOnAction(e ->
+		        navigator.accept(new SchedaArticoloView(() ->
+		                navigator.accept(new ArticoliView(navigator).build())
+		        ).build())
+		);
 
         VBox tableCard = new VBox(table);
         tableCard.setPadding(new Insets(18));
@@ -272,7 +284,9 @@ public class ArticoliView {
 
                 editButton.setOnAction(event -> {
                     ArticoloDTO articolo = getTableView().getItems().get(getIndex());
-                    showModificaArticoloDialog(articolo);
+		                    navigator.accept(new SchedaArticoloView(articolo, () ->
+		                    navigator.accept(new ArticoliView(navigator).build())
+		            ).build());
                 });
 
                 toggleButton.setOnAction(event -> {
@@ -557,7 +571,6 @@ public class ArticoliView {
             Integer iva = ivaCombo.getValue();
             CategoriaArticoloDTO categoria = categoriaCombo.getValue();
 
-            String codiceNormalizzato = codice != null ? codice.trim().toUpperCase() : "";
             String prezzoNormalizzato = normalizePrezzo(prezzo);
 
             if (codice == null || codice.isBlank()
@@ -582,7 +595,6 @@ public class ArticoliView {
             }
 
             boolean ok = articoloService.createArticolo(
-                    codiceNormalizzato,
                     nome.trim(),
                     descrizione != null ? descrizione.trim() : "",
                     prezzoNormalizzato,
@@ -745,7 +757,6 @@ public class ArticoliView {
             Integer iva = ivaCombo.getValue();
             CategoriaArticoloDTO categoria = categoriaCombo.getValue();
 
-            String codiceNormalizzato = codice != null ? codice.trim().toUpperCase() : "";
             String prezzoNormalizzato = normalizePrezzo(prezzo);
 
             if (codice == null || codice.isBlank()
@@ -770,7 +781,6 @@ public class ArticoliView {
 
             boolean ok = articoloService.updateArticolo(
                     articolo.getId(),
-                    codiceNormalizzato,
                     nome.trim(),
                     descrizione != null ? descrizione.trim() : "",
                     prezzoNormalizzato,

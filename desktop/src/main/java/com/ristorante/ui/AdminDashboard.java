@@ -1,5 +1,6 @@
 package com.ristorante.ui;
 
+import com.ristorante.ui.model.ArticoloDTO;
 import com.ristorante.ui.view.ArticoliView;
 import com.ristorante.ui.view.CategorieArticoliView;
 import com.ristorante.ui.view.DashboardHomeView;
@@ -7,6 +8,7 @@ import com.ristorante.ui.view.RuoliView;
 import com.ristorante.ui.view.UtentiView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -14,9 +16,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.scene.Node;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class AdminDashboard {
 
@@ -25,6 +29,10 @@ public class AdminDashboard {
     private VBox contentArea;
     private VBox articoliSubMenu;
     private boolean articoliExpanded = false;
+    
+    private void openContent(Node node) {
+        contentArea.getChildren().setAll(node);
+    }
 
     public void show(Stage stage, String username) {
         VBox sidebar = new VBox(12);
@@ -149,7 +157,7 @@ public class AdminDashboard {
 
             switch (text) {
                 case "Categorie articoli" -> contentArea.getChildren().setAll(new CategorieArticoliView().build());
-                case "Lista articoli" -> contentArea.getChildren().setAll(new ArticoliView().build());
+                case "Lista articoli" -> openContent(new ArticoliView(this::openContent).build());
                 default -> contentArea.getChildren().setAll(buildPlaceholder(text));
             }
         });

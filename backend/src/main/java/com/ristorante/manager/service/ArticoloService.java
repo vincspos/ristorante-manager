@@ -23,7 +23,7 @@ public class ArticoloService {
 
         validateArticolo(articolo, null);
 
-        articolo.setCodice(normalize(articolo.getCodice()));
+        articolo.setCodice(generaCodice());
         articolo.setNome(articolo.getNome().trim());
         articolo.setCategoria(articolo.getCategoria().trim());
 
@@ -37,7 +37,6 @@ public class ArticoloService {
 
         validateArticolo(articoloAggiornato, id);
 
-        articolo.setCodice(normalize(articoloAggiornato.getCodice()));
         articolo.setNome(articoloAggiornato.getNome().trim());
         articolo.setDescrizione(articoloAggiornato.getDescrizione());
         articolo.setPrezzo(articoloAggiornato.getPrezzo());
@@ -64,8 +63,7 @@ public class ArticoloService {
 
     private void validateArticolo(Articolo articolo, Long currentId) {
 
-        if (articolo.getCodice() == null || articolo.getCodice().isBlank()
-                || articolo.getNome() == null || articolo.getNome().isBlank()
+        if (articolo.getNome() == null || articolo.getNome().isBlank()
                 || articolo.getPrezzo() == null
                 || articolo.getCategoria() == null || articolo.getCategoria().isBlank()) {
             throw new RuntimeException("Compila tutti i campi obbligatori");
@@ -87,5 +85,10 @@ public class ArticoloService {
 
     private String normalize(String value) {
         return value == null ? null : value.trim().toUpperCase();
+    }
+    
+    private String generaCodice() {
+        long count = articoloRepository.count() + 1;
+        return String.format("ART-%03d", count);
     }
 }

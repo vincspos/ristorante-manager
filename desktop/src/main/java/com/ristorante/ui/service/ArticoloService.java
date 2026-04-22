@@ -51,12 +51,11 @@ public class ArticoloService {
         return lista;
     }
 
-    public boolean createArticolo(String codice, String nome, String descrizione,
+    public boolean createArticolo(String nome, String descrizione,
                                   String prezzo, String categoria, Integer iva) {
         try {
             String jsonInput = """
                 {
-                  "codice": "%s",
                   "nome": "%s",
                   "descrizione": "%s",
                   "prezzo": %s,
@@ -64,7 +63,7 @@ public class ArticoloService {
                   "attivo": true,
                   "iva": %s
                 }
-                """.formatted(codice, nome, descrizione, prezzo, categoria, iva);
+                """.formatted(nome, descrizione, prezzo, categoria, iva);
 
             HttpClient client = HttpClient.newHttpClient();
 
@@ -84,14 +83,13 @@ public class ArticoloService {
         }
     }
 
-    public boolean updateArticolo(Long id, String codice, String nome,
+    public boolean updateArticolo(Long id, String nome,
             String descrizione, String prezzo,
             String categoria, Integer iva, boolean attivo) {
         try {
             String jsonInput = """
                 {
                   "id": %d,
-                  "codice": "%s",
                   "nome": "%s",
                   "descrizione": "%s",
                   "prezzo": %s,
@@ -99,7 +97,7 @@ public class ArticoloService {
                   "attivo": %s,
                   "iva": %s
                 }
-                """.formatted(id, codice, nome, descrizione, prezzo, categoria, attivo, iva);
+                """.formatted(id, nome, descrizione, prezzo, categoria, attivo, iva);
 
             HttpClient client = HttpClient.newHttpClient();
 
