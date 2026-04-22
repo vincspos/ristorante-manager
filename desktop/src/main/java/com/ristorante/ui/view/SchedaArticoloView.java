@@ -204,7 +204,7 @@ public class SchedaArticoloView {
             String nomeNormalizzato = nome != null ? nome.trim() : "";
             String descrizioneNormalizzata = descrizione != null ? descrizione.trim() : "";
             String prezzoNormalizzato = normalizePrezzo(prezzo);
-            BigDecimal prezzoValue = new BigDecimal(prezzoNormalizzato);
+            
 
             if (nomeNormalizzato.isBlank()
                     || prezzoNormalizzato.isBlank()
@@ -218,6 +218,8 @@ public class SchedaArticoloView {
                 showInlineError(errorLabel, "Inserisci un prezzo valido, ad esempio 6.50");
                 return;
             }
+            
+            BigDecimal prezzoValue = new BigDecimal(prezzoNormalizzato);
 
             boolean ok;
             if (editMode && articolo != null) {
