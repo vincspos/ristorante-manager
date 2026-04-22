@@ -151,14 +151,14 @@ public class SchedaArticoloView {
             attivoCheck.setSelected(articolo.isAttivo());
 
             categorie.stream()
-                    .filter(c -> c.getNome().equalsIgnoreCase(articolo.getCategoria()))
-                    .findFirst()
-                    .ifPresent(c -> {
-                        if (!categoriaCombo.getItems().contains(c)) {
-                            categoriaCombo.getItems().add(c);
-                        }
-                        categoriaCombo.setValue(c);
-                    });
+		            .filter(c -> c.getId().equals(articolo.getCategoriaId()))
+		            .findFirst()
+		            .ifPresent(c -> {
+		                if (!categoriaCombo.getItems().contains(c)) {
+		                    categoriaCombo.getItems().add(c);
+		                }
+		                categoriaCombo.setValue(c);
+            });
         }
 
         VBox datiPrincipaliCard = buildCard(
@@ -204,6 +204,7 @@ public class SchedaArticoloView {
             String nomeNormalizzato = nome != null ? nome.trim() : "";
             String descrizioneNormalizzata = descrizione != null ? descrizione.trim() : "";
             String prezzoNormalizzato = normalizePrezzo(prezzo);
+            BigDecimal prezzoValue = new BigDecimal(prezzoNormalizzato);
 
             if (nomeNormalizzato.isBlank()
                     || prezzoNormalizzato.isBlank()
@@ -220,23 +221,23 @@ public class SchedaArticoloView {
 
             boolean ok;
             if (editMode && articolo != null) {
-                ok = articoloService.updateArticolo(
-                		articolo.getId(),
-                        nomeNormalizzato,
-                        descrizioneNormalizzata,
-                        prezzoNormalizzato,
-                        categoria.getNome(),
-                        iva,
-                        attivo
-                );
+            	ok = articoloService.updateArticolo(
+            	        articolo.getId(),
+            	        nomeNormalizzato,
+            	        descrizioneNormalizzata,
+            	        prezzoValue,
+            	        categoria.getId(),
+            	        iva,
+            	        attivo
+            	);
             } else {
-                ok = articoloService.createArticolo(
-                        nomeNormalizzato,
-                        descrizioneNormalizzata,
-                        prezzoNormalizzato,
-                        categoria.getNome(),
-                        iva
-                );
+            	ok = articoloService.createArticolo(
+            	        nomeNormalizzato,
+            	        descrizioneNormalizzata,
+            	        prezzoValue,
+            	        categoria.getId(),
+            	        iva
+            	);
             }
 
             if (!ok) {

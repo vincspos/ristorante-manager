@@ -144,7 +144,7 @@ public class ArticoliView {
         colNome.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<ArticoloDTO, String> colCategoria = new TableColumn<>("Categoria");
-        colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
+        colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoriaNome"));
         colCategoria.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<ArticoloDTO, BigDecimal> colPrezzo = new TableColumn<>("Prezzo");
@@ -401,7 +401,7 @@ public class ArticoliView {
         categoriaFilter.getItems().add("Tutte le categorie");
         categoriaFilter.getItems().addAll(
                 articoliCompleti.stream()
-                        .map(ArticoloDTO::getCategoria)
+                		.map(ArticoloDTO::getCategoriaNome)
                         .filter(c -> c != null && !c.isBlank())
                         .map(String::trim)
                         .distinct()
@@ -415,10 +415,6 @@ public class ArticoliView {
 
     private void refreshData() {
         loadInitialData();
-    }
-
-    private void refreshTable() {
-        refreshData();
     }
 
     private void applyFilters() {
@@ -440,7 +436,7 @@ public class ArticoliView {
                     boolean matchCategoria =
                             categoriaSelezionata == null
                                     || categoriaSelezionata.equals("Tutte le categorie")
-                                    || categoriaSelezionata.equalsIgnoreCase(a.getCategoria());
+                                    || categoriaSelezionata.equalsIgnoreCase(a.getCategoriaNome());
 
                     boolean matchStato =
                             statoSelezionato == null
@@ -472,7 +468,7 @@ public class ArticoliView {
     	    boolean ok = articoloService.updateStatoArticolo(articolo.getId(), !articolo.isAttivo());
 
     	    if (ok) {
-    	        refreshTable();
+    	    	refreshData();
     	    } else {
     	        UiDialogs.showError(
     	                "Errore",
@@ -514,16 +510,6 @@ public class ArticoliView {
         }
     }
 
-    private Label createFormLabel(String text) {
-        Label label = new Label(text);
-        label.setStyle("""
-            -fx-font-size: 13px;
-            -fx-font-weight: bold;
-            -fx-text-fill: #374151;
-        """);
-        return label;
-    }
-
     private void styleTextField(TextField field, String prompt) {
         field.setPromptText(prompt);
         field.setPrefHeight(42);
@@ -536,49 +522,5 @@ public class ArticoliView {
             -fx-padding: 0 12 0 12;
             -fx-font-size: 14px;
         """);
-    }
-
-    private void stylePrimaryButton(Button button) {
-        button.setPrefHeight(42);
-        button.setStyle("""
-            -fx-background-color: #0f766e;
-            -fx-text-fill: white;
-            -fx-font-size: 14px;
-            -fx-font-weight: bold;
-            -fx-background-radius: 10;
-            -fx-cursor: hand;
-            -fx-padding: 0 18 0 18;
-        """);
-    }
-
-    private void styleSecondaryButton(Button button) {
-        button.setPrefHeight(42);
-        button.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #d1d5db;
-            -fx-text-fill: #374151;
-            -fx-font-size: 14px;
-            -fx-font-weight: bold;
-            -fx-border-radius: 10;
-            -fx-background-radius: 10;
-            -fx-cursor: hand;
-            -fx-padding: 0 18 0 18;
-        """);
-    }
-
-    private String normalizePrezzo(String prezzoInput) {
-        if (prezzoInput == null) {
-            return "";
-        }
-        return prezzoInput.trim().replace(",", ".");
-    }
-
-    private boolean isPrezzoValido(String prezzo) {
-        try {
-            BigDecimal value = new BigDecimal(prezzo);
-            return value.compareTo(BigDecimal.ZERO) >= 0;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

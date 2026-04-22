@@ -23,8 +23,9 @@ public class Articolo {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal prezzo;
 
-    @Column(nullable = false, length = 80)
-    private String categoria;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id")
+    private CategoriaArticolo categoria;
 
     @Column(nullable = false)
     private Boolean attivo = true;
@@ -48,8 +49,8 @@ public class Articolo {
     public BigDecimal getPrezzo() { return prezzo; }
     public void setPrezzo(BigDecimal prezzo) { this.prezzo = prezzo; }
 
-    public String getCategoria() { return categoria; }
-    public void setCategoria(String categoria) { this.categoria = categoria; }
+    public CategoriaArticolo getCategoria() { return categoria; }
+    public void setCategoria(CategoriaArticolo categoria) { this.categoria = categoria; }
 
     public Boolean getAttivo() { return attivo; }
     public void setAttivo(Boolean attivo) { this.attivo = attivo; }

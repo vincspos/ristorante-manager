@@ -3,6 +3,7 @@ package com.ristorante.ui.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ristorante.ui.model.ArticoloDTO;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -32,16 +33,17 @@ public class ArticoloService {
             var jsonList = mapper.readTree(response.body());
 
             for (var node : jsonList) {
-                lista.add(new ArticoloDTO(
-                        node.get("id").asLong(),
-                        node.get("codice").asText(),
-                        node.get("nome").asText(),
-                        node.hasNonNull("descrizione") ? node.get("descrizione").asText() : "",
-                        node.get("prezzo").decimalValue(),
-                        node.get("categoria").asText(),
-                        node.get("attivo").asBoolean(),
-                        node.get("iva").asInt()
-                ));
+            	lista.add(new ArticoloDTO(
+            	        node.get("id").asLong(),
+            	        node.get("codice").asText(),
+            	        node.get("nome").asText(),
+            	        node.hasNonNull("descrizione") ? node.get("descrizione").asText() : "",
+            	        node.get("prezzo").decimalValue(),
+            	        node.hasNonNull("categoriaId") ? node.get("categoriaId").asLong() : null,
+            	        node.hasNonNull("categoriaNome") ? node.get("categoriaNome").asText() : "",
+            	        node.get("attivo").asBoolean(),
+            	        node.get("iva").asInt()
+            	));
             }
 
         } catch (Exception e) {
@@ -52,18 +54,23 @@ public class ArticoloService {
     }
 
     public boolean createArticolo(String nome, String descrizione,
-                                  String prezzo, String categoria, Integer iva) {
+    							BigDecimal prezzo, Long categoriaId, Integer iva) {
         try {
-            String jsonInput = """
-                {
-                  "nome": "%s",
-                  "descrizione": "%s",
-                  "prezzo": %s,
-                  "categoria": "%s",
-                  "attivo": true,
-                  "iva": %s
-                }
-                """.formatted(nome, descrizione, prezzo, categoria, iva);
+        	
+        	if (categoriaId == null) {
+                return false;
+            }
+        	
+        	String jsonInput = """
+        		    {
+        		      "nome": "%s",
+        		      "descrizione": "%s",
+        		      "prezzo": %s,
+        		      "categoriaId": %d,
+        		      "attivo": true,
+        		      "iva": %s
+        		    }
+        		    """.formatted(nome, descrizione, prezzo, categoriaId, iva);
 
             HttpClient client = HttpClient.newHttpClient();
 
@@ -84,20 +91,24 @@ public class ArticoloService {
     }
 
     public boolean updateArticolo(Long id, String nome,
-            String descrizione, String prezzo,
-            String categoria, Integer iva, boolean attivo) {
+            String descrizione, BigDecimal prezzo,
+            Long categoriaId, Integer iva, boolean attivo) {
         try {
-            String jsonInput = """
-                {
-                  "id": %d,
-                  "nome": "%s",
-                  "descrizione": "%s",
-                  "prezzo": %s,
-                  "categoria": "%s",
-                  "attivo": %s,
-                  "iva": %s
-                }
-                """.formatted(id, nome, descrizione, prezzo, categoria, attivo, iva);
+        	
+			 if (categoriaId == null) {
+			     return false;
+			 }
+        	 
+        	String jsonInput = """
+        		    {
+        		      "nome": "%s",
+        		      "descrizione": "%s",
+        		      "prezzo": %s,
+        		      "categoriaId": %d,
+        		      "attivo": %s,
+        		      "iva": %s
+        		    }
+        		    """.formatted(nome, descrizione, prezzo, categoriaId, attivo, iva);
 
             HttpClient client = HttpClient.newHttpClient();
 

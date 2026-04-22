@@ -4,20 +4,12 @@ import java.math.BigDecimal;
 
 public class ArticoloRequest {
 
-    private String codice;
     private String nome;
     private String descrizione;
     private BigDecimal prezzo;
-    private String categoria;
+    private Long categoriaId;
+    private Integer iva;
     private Boolean attivo;
-
-    public String getCodice() {
-        return codice;
-    }
-
-    public void setCodice(String codice) {
-        this.codice = codice;
-    }
 
     public String getNome() {
         return nome;
@@ -43,12 +35,20 @@ public class ArticoloRequest {
         this.prezzo = prezzo;
     }
 
-    public String getCategoria() {
-        return categoria;
+    public Long getCategoriaId() {
+        return categoriaId;
     }
 
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
+    public void setCategoriaId(Long categoriaId) {
+        this.categoriaId = categoriaId;
+    }
+
+    public Integer getIva() {
+        return iva;
+    }
+
+    public void setIva(Integer iva) {
+        this.iva = iva;
     }
 
     public Boolean getAttivo() {

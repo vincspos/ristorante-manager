@@ -1,6 +1,7 @@
 package com.ristorante.manager.controller;
 
-import com.ristorante.manager.entity.Articolo;
+import com.ristorante.manager.dto.ArticoloRequest;
+import com.ristorante.manager.dto.ArticoloResponse;
 import com.ristorante.manager.service.ArticoloService;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,24 +20,23 @@ public class ArticoloController {
     }
 
     @GetMapping
-    public List<Articolo> getAll() {
+    public List<ArticoloResponse> getAll() {
         return articoloService.findAll();
     }
 
     @PostMapping
-    public Articolo create(@RequestBody Articolo articolo) {
-        return articoloService.save(articolo);
+    public ArticoloResponse create(@RequestBody ArticoloRequest request) {
+        return articoloService.save(request);
     }
 
     @PutMapping("/{id}")
-    public Articolo update(@PathVariable Long id, @RequestBody Articolo articolo) {
-        return articoloService.update(id, articolo);
+    public ArticoloResponse update(@PathVariable Long id, @RequestBody ArticoloRequest request) {
+        return articoloService.update(id, request);
     }
 
     @PatchMapping("/{id}/stato")
-    public Articolo updateStato(@PathVariable Long id,
-                               @RequestBody Map<String, Boolean> payload) {
-
+    public ArticoloResponse updateStato(@PathVariable Long id,
+                                        @RequestBody Map<String, Boolean> payload) {
         Boolean attivo = payload.get("attivo");
         return articoloService.updateStato(id, attivo);
     }
