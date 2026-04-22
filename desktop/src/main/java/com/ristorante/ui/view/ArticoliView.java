@@ -32,6 +32,7 @@ public class ArticoliView {
     private final ComboBox<String> statoFilter = new ComboBox<>();
 
     private List<ArticoloDTO> articoliCompleti = new ArrayList<>();
+    private final java.util.Map<String, String> coloriCategorie = new java.util.HashMap<>();
     
     private final Consumer<Node> navigator;
 
@@ -246,15 +247,13 @@ public class ArticoliView {
                 String categoriaUpper = categoria.trim().toUpperCase();
                 badge.setText(categoriaUpper);
 
-                switch (categoriaUpper) {
-                    case "PIZZE" -> badge.setStyle("-fx-background-color: #dc2626; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "BEVANDE" -> badge.setStyle("-fx-background-color: #2563eb; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "DESSERT" -> badge.setStyle("-fx-background-color: #7c3aed; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "ANTIPASTI" -> badge.setStyle("-fx-background-color: #0891b2; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "PRIMI" -> badge.setStyle("-fx-background-color: #ea580c; -fx-background-radius: 999; -fx-text-fill: white;");
-                    case "SECONDI" -> badge.setStyle("-fx-background-color: #0f766e; -fx-background-radius: 999; -fx-text-fill: white;");
-                    default -> badge.setStyle("-fx-background-color: #6b7280; -fx-background-radius: 999; -fx-text-fill: white;");
-                }
+                String colore = coloriCategorie.getOrDefault(categoriaUpper, "#6B7280");
+
+                badge.setStyle("""
+                    -fx-background-color: %s;
+                    -fx-background-radius: 999;
+                    -fx-text-fill: white;
+                """.formatted(colore));
 
                 setText(null);
                 setGraphic(wrapper);
@@ -389,7 +388,13 @@ public class ArticoliView {
     }
 
     private void loadInitialData() {
-        articoliCompleti = new ArrayList<>(articoloService.loadArticoli());
+    	
+    	articoliCompleti = new ArrayList<>(articoloService.loadArticoli());
+    	
+    	coloriCategorie.clear();
+    	categoriaService.loadCategorie().forEach(c ->
+    	        coloriCategorie.put(c.getNome().trim().toUpperCase(), c.getColore())
+    	);
         sortArticoliList();
 
         categoriaFilter.getItems().clear();
@@ -453,362 +458,7 @@ public class ArticoliView {
     private boolean containsIgnoreCase(String value, String search) {
         return value != null && value.toLowerCase().contains(search);
     }
-
-    private void showNuovoArticoloDialog() {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Nuovo articolo");
-        dialog.setHeaderText(null);
-
-        DialogPane dialogPane = dialog.getDialogPane();
-        dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        dialogPane.setStyle("""
-            -fx-background-color: #f9fafb;
-            -fx-background-radius: 18;
-            -fx-border-radius: 18;
-        """);
-
-        TextField codiceField = new TextField();
-        styleTextField(codiceField, "Inserisci codice articolo");
-
-        TextField nomeField = new TextField();
-        styleTextField(nomeField, "Inserisci nome articolo");
-
-        TextField descrizioneField = new TextField();
-        styleTextField(descrizioneField, "Inserisci descrizione");
-
-        TextField prezzoField = new TextField();
-        styleTextField(prezzoField, "Inserisci prezzo");
-        
-        ComboBox<Integer> ivaCombo = new ComboBox<>();
-        ivaCombo.getItems().addAll(4, 10, 22);
-        ivaCombo.setValue(10);
-        ivaCombo.setPromptText("Seleziona IVA");
-        ivaCombo.setPrefHeight(42);
-        ivaCombo.setMaxWidth(Double.MAX_VALUE);
-        ivaCombo.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #d1d5db;
-            -fx-border-radius: 10;
-            -fx-background-radius: 10;
-            -fx-font-size: 14px;
-        """);
-
-        ComboBox<CategoriaArticoloDTO> categoriaCombo = new ComboBox<>();
-
-        categoriaCombo.getItems().addAll(
-                categoriaService.loadCategorie().stream()
-                        .filter(CategoriaArticoloDTO::isAttivo)
-                        .toList()
-        );
-
-        categoriaCombo.setPromptText("Seleziona categoria");
-        categoriaCombo.setPrefHeight(42);
-        categoriaCombo.setMaxWidth(Double.MAX_VALUE);
-        categoriaCombo.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #d1d5db;
-            -fx-border-radius: 10;
-            -fx-background-radius: 10;
-            -fx-font-size: 14px;
-        """);
-
-        Label title = new Label("Nuovo articolo");
-        title.setStyle("""
-            -fx-font-size: 22px;
-            -fx-font-weight: bold;
-            -fx-text-fill: #1f2937;
-        """);
-
-        Label subtitle = new Label("Inserisci i dati del nuovo articolo");
-        subtitle.setStyle("""
-            -fx-font-size: 13px;
-            -fx-text-fill: #6b7280;
-        """);
-
-        Label errorLabel = new Label();
-        errorLabel.setVisible(false);
-        errorLabel.setManaged(false);
-        errorLabel.setWrapText(true);
-        errorLabel.setStyle("""
-            -fx-text-fill: #dc2626;
-            -fx-font-size: 13px;
-            -fx-font-weight: bold;
-        """);
-
-        VBox form = new VBox(10,
-                createFormLabel("Codice"), codiceField,
-                createFormLabel("Nome"), nomeField,
-                createFormLabel("Descrizione"), descrizioneField,
-                createFormLabel("Prezzo"), prezzoField,
-                createFormLabel("IVA"), ivaCombo,
-                createFormLabel("Categoria"), categoriaCombo,
-                errorLabel
-        );
-
-        VBox content = new VBox(18, new VBox(4, title, subtitle), form);
-        content.setPadding(new Insets(24));
-        content.setPrefWidth(440);
-
-        dialogPane.setContent(content);
-
-        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
-        Button cancelButton = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
-
-        okButton.setText("Crea articolo");
-        cancelButton.setText("Annulla");
-
-        okButton.setPrefWidth(140);
-        cancelButton.setPrefWidth(120);
-
-        stylePrimaryButton(okButton);
-        styleSecondaryButton(cancelButton);
-
-        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
-            String codice = codiceField.getText();
-            String nome = nomeField.getText();
-            String descrizione = descrizioneField.getText();
-            String prezzo = prezzoField.getText();
-            Integer iva = ivaCombo.getValue();
-            CategoriaArticoloDTO categoria = categoriaCombo.getValue();
-
-            String prezzoNormalizzato = normalizePrezzo(prezzo);
-
-            if (codice == null || codice.isBlank()
-                    || nome == null || nome.isBlank()
-                    || prezzo == null || prezzo.isBlank()
-            		|| categoria == null
-                    || categoria == null ) {
-
-                errorLabel.setText("Compila tutti i campi obbligatori prima di continuare.");
-                errorLabel.setVisible(true);
-                errorLabel.setManaged(true);
-                event.consume();
-                return;
-            }
-
-            if (!isPrezzoValido(prezzoNormalizzato)) {
-                errorLabel.setText("Inserisci un prezzo valido, ad esempio 6.50");
-                errorLabel.setVisible(true);
-                errorLabel.setManaged(true);
-                event.consume();
-                return;
-            }
-
-            boolean ok = articoloService.createArticolo(
-                    nome.trim(),
-                    descrizione != null ? descrizione.trim() : "",
-                    prezzoNormalizzato,
-                    categoria.getNome(),
-                    iva
-            );
-
-            if (!ok) {
-                errorLabel.setText("Impossibile creare l'articolo. Verifica i dati o il backend.");
-                errorLabel.setVisible(true);
-                errorLabel.setManaged(true);
-                event.consume();
-                return;
-            }
-
-            refreshTable();
-            dialog.close();
-
-            UiDialogs.showSuccess(
-                    "Successo",
-                    "Articolo creato",
-                    "L'articolo è stato creato correttamente."
-            );
-        });
-
-        dialog.showAndWait();
-    }
-
-    private void showModificaArticoloDialog(ArticoloDTO articolo) {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Modifica articolo");
-        dialog.setHeaderText(null);
-
-        DialogPane dialogPane = dialog.getDialogPane();
-        dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        dialogPane.setStyle("""
-            -fx-background-color: #f9fafb;
-            -fx-background-radius: 18;
-            -fx-border-radius: 18;
-        """);
-
-        TextField codiceField = new TextField(articolo.getCodice());
-        styleTextField(codiceField, "Inserisci codice articolo");
-
-        TextField nomeField = new TextField(articolo.getNome());
-        styleTextField(nomeField, "Inserisci nome articolo");
-
-        TextField descrizioneField = new TextField(articolo.getDescrizione());
-        styleTextField(descrizioneField, "Inserisci descrizione");
-
-        TextField prezzoField = new TextField(
-                articolo.getPrezzo() != null
-                        ? articolo.getPrezzo().setScale(2, java.math.RoundingMode.HALF_UP).toString()
-                        : ""
-        );
-        styleTextField(prezzoField, "Inserisci prezzo");
-        
-        ComboBox<Integer> ivaCombo = new ComboBox<>();
-        ivaCombo.getItems().addAll(4, 10, 22);
-        ivaCombo.setValue(articolo.getIva() != null ? articolo.getIva() : 10);
-        ivaCombo.setPromptText("Seleziona IVA");
-        ivaCombo.setPrefHeight(42);
-        ivaCombo.setMaxWidth(Double.MAX_VALUE);
-        ivaCombo.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #d1d5db;
-            -fx-border-radius: 10;
-            -fx-background-radius: 10;
-            -fx-font-size: 14px;
-        """);
-
-        ComboBox<CategoriaArticoloDTO> categoriaCombo = new ComboBox<>();
-
-        List<CategoriaArticoloDTO> categorie = categoriaService.loadCategorie();
-
-        // solo attive
-        categoriaCombo.getItems().addAll(
-                categorie.stream()
-                        .filter(CategoriaArticoloDTO::isAttivo)
-                        .toList()
-        );
-
-        // aggiungi anche quella attuale se disattiva
-        categorie.stream()
-                .filter(c -> c.getNome().equalsIgnoreCase(articolo.getCategoria()))
-                .findFirst()
-                .ifPresent(c -> {
-                    if (!categoriaCombo.getItems().contains(c)) {
-                        categoriaCombo.getItems().add(c);
-                    }
-                    categoriaCombo.setValue(c);
-                });
-
-        categoriaCombo.setPrefHeight(42);
-        categoriaCombo.setMaxWidth(Double.MAX_VALUE);
-        categoriaCombo.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #d1d5db;
-            -fx-border-radius: 10;
-            -fx-background-radius: 10;
-            -fx-font-size: 14px;
-        """);
-
-        Label title = new Label("Modifica articolo");
-        title.setStyle("""
-            -fx-font-size: 22px;
-            -fx-font-weight: bold;
-            -fx-text-fill: #1f2937;
-        """);
-
-        Label subtitle = new Label("Aggiorna i dati dell'articolo selezionato");
-        subtitle.setStyle("""
-            -fx-font-size: 13px;
-            -fx-text-fill: #6b7280;
-        """);
-
-        Label errorLabel = new Label();
-        errorLabel.setVisible(false);
-        errorLabel.setManaged(false);
-        errorLabel.setWrapText(true);
-        errorLabel.setStyle("""
-            -fx-text-fill: #dc2626;
-            -fx-font-size: 13px;
-            -fx-font-weight: bold;
-        """);
-
-        VBox form = new VBox(10,
-                createFormLabel("Codice"), codiceField,
-                createFormLabel("Nome"), nomeField,
-                createFormLabel("Descrizione"), descrizioneField,
-                createFormLabel("Prezzo"), prezzoField,
-                createFormLabel("IVA"), ivaCombo,
-                createFormLabel("Categoria"), categoriaCombo,
-                errorLabel
-        );
-
-        VBox content = new VBox(18, new VBox(4, title, subtitle), form);
-        content.setPadding(new Insets(24));
-        content.setPrefWidth(440);
-
-        dialogPane.setContent(content);
-
-        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
-        Button cancelButton = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
-
-        okButton.setText("Salva modifiche");
-        cancelButton.setText("Annulla");
-
-        okButton.setPrefWidth(150);
-        cancelButton.setPrefWidth(120);
-
-        stylePrimaryButton(okButton);
-        styleSecondaryButton(cancelButton);
-
-        okButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
-            String codice = codiceField.getText();
-            String nome = nomeField.getText();
-            String descrizione = descrizioneField.getText();
-            String prezzo = prezzoField.getText();
-            Integer iva = ivaCombo.getValue();
-            CategoriaArticoloDTO categoria = categoriaCombo.getValue();
-
-            String prezzoNormalizzato = normalizePrezzo(prezzo);
-
-            if (codice == null || codice.isBlank()
-                    || nome == null || nome.isBlank()
-                    || prezzo == null || prezzo.isBlank()
-                    || categoria == null  || iva == null) {
-
-                errorLabel.setText("Compila tutti i campi obbligatori prima di continuare.");
-                errorLabel.setVisible(true);
-                errorLabel.setManaged(true);
-                event.consume();
-                return;
-            }
-
-            if (!isPrezzoValido(prezzoNormalizzato)) {
-                errorLabel.setText("Inserisci un prezzo valido, ad esempio 6.50");
-                errorLabel.setVisible(true);
-                errorLabel.setManaged(true);
-                event.consume();
-                return;
-            }
-
-            boolean ok = articoloService.updateArticolo(
-                    articolo.getId(),
-                    nome.trim(),
-                    descrizione != null ? descrizione.trim() : "",
-                    prezzoNormalizzato,
-                    categoria.getNome(),
-                    iva,
-                    articolo.isAttivo()
-            );
-
-            if (!ok) {
-                errorLabel.setText("Impossibile aggiornare l'articolo.");
-                errorLabel.setVisible(true);
-                errorLabel.setManaged(true);
-                event.consume();
-                return;
-            }
-
-            refreshTable();
-            dialog.close();
-            UiDialogs.showSuccess(
-                    "Successo",
-                    "Articolo aggiornato",
-                    "L'articolo è stato aggiornato correttamente."
-            );
-        });
-
-        dialog.showAndWait();
-    }
-
+    
     private void showCambioStatoConferma(ArticoloDTO articolo) {
     	String azione = articolo.isAttivo() ? "disattivare" : "riattivare";
 
