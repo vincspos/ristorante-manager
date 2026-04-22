@@ -13,6 +13,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -132,10 +133,16 @@ public class SchedaArticoloView {
         errorLabel.setManaged(false);
         errorLabel.setWrapText(true);
         errorLabel.setStyle("""
-            -fx-text-fill: #dc2626;
-            -fx-font-size: 13px;
-            -fx-font-weight: bold;
-        """);
+    	    -fx-text-fill: #b91c1c;
+    	    -fx-font-size: 13px;
+    	    -fx-font-weight: bold;
+    	    -fx-background-color: #fef2f2;
+    	    -fx-border-color: #fecaca;
+    	    -fx-border-radius: 10;
+    	    -fx-background-radius: 10;
+    	    -fx-padding: 10 12 10 12;
+    	""");
+    	errorLabel.setMaxWidth(Double.MAX_VALUE);
 
         List<CategoriaArticoloDTO> categorie = categoriaService.loadCategorie();
 
@@ -196,14 +203,20 @@ public class SchedaArticoloView {
         Button saveButton = new Button(editMode ? "Salva modifiche" : "Crea articolo");
         stylePrimaryButton(saveButton);
         saveButton.setPrefWidth(160);
+        saveButton.setMinWidth(160);
 
         Button cancelButton = new Button("Annulla");
         styleSecondaryButton(cancelButton);
         cancelButton.setPrefWidth(120);
+        cancelButton.setMinWidth(120);
         cancelButton.setOnAction(e -> onBack.run());
 
         saveButton.setOnAction(e -> {
 		    resetInlineError(errorLabel);
+		    resetFieldStyle(nomeField);
+		    resetFieldStyle(prezzoField);
+		    resetComboStyle(categoriaCombo);
+		    resetComboStyle(ivaCombo);
 		
 		    String nome = nomeField.getText();
 		    String descrizione = descrizioneArea.getText();
@@ -215,11 +228,12 @@ public class SchedaArticoloView {
 		    String nomeNormalizzato = nome != null ? nome.trim() : "";
 		    String descrizioneNormalizzata = descrizione != null ? descrizione.trim() : "";
 		
-		    if (!validateNomeCategoriaIva(errorLabel, nomeNormalizzato, categoria, iva)) {
+		    if (!validateNomeCategoriaIva( errorLabel, nomeNormalizzato,  categoria, iva,
+		            nomeField,  categoriaCombo,  ivaCombo )) {
 		        return;
 		    }
 		
-		    BigDecimal prezzoValue = parsePrezzoOrShowError(errorLabel, prezzo);
+		    BigDecimal prezzoValue = parsePrezzoOrShowError(errorLabel, prezzo, prezzoField);
 		    if (prezzoValue == null) {
 		        return;
 		    }
@@ -250,24 +264,30 @@ public class SchedaArticoloView {
 		
 		    onBack.run();
 		});
-        
+
         HBox actionsBar = new HBox(10, saveButton, cancelButton);
         actionsBar.setAlignment(Pos.CENTER_RIGHT);
+        actionsBar.setPadding(new Insets(12, 0, 0, 0));
 
-        VBox container = new VBox(
+        VBox content = new VBox(
                 20,
                 topBar,
+                errorLabel,
                 datiPrincipaliCard,
                 datiEconomiciCard,
-                statoCard,
-                errorLabel,
-                actionsBar
+                statoCard
         );
-        container.setPadding(new Insets(4, 0, 0, 0));
-        
+        content.setPadding(new Insets(4, 0, 0, 0));
+
+        BorderPane root = new BorderPane();
+        root.setCenter(content);
+        root.setBottom(actionsBar);
+
+        BorderPane.setMargin(actionsBar, new Insets(0, 0, 0, 0));
+
         javafx.application.Platform.runLater(nomeField::requestFocus);
 
-        return container;
+        return new VBox(root);
     }
 
     private VBox buildMainDataGrid(TextField codiceField,
@@ -391,7 +411,8 @@ public class SchedaArticoloView {
     }
 
     private void stylePrimaryButton(Button button) {
-        button.setPrefHeight(42);
+    	button.setPrefHeight(42);
+        button.setMinHeight(42);
         button.setStyle("""
             -fx-background-color: #0f766e;
             -fx-text-fill: white;
@@ -404,7 +425,8 @@ public class SchedaArticoloView {
     }
 
     private void styleSecondaryButton(Button button) {
-        button.setPrefHeight(42);
+    	button.setPrefHeight(42);
+        button.setMinHeight(42);
         button.setStyle("""
             -fx-background-color: white;
             -fx-border-color: #d1d5db;
@@ -440,38 +462,47 @@ public class SchedaArticoloView {
         errorLabel.setManaged(false);
     }
 
-    private boolean validateNomeCategoriaIva(Label errorLabel,
-                                             String nomeNormalizzato,
-                                             CategoriaArticoloDTO categoria,
-                                             Integer iva) {
-        if (nomeNormalizzato.isBlank()) {
-            showInlineError(errorLabel, "Inserisci il nome dell'articolo.");
-            return false;
-        }
+    private boolean validateNomeCategoriaIva(Label errorLabel,  String nomeNormalizzato,  CategoriaArticoloDTO categoria,
+            	Integer iva, TextField nomeField, ComboBox<CategoriaArticoloDTO> categoriaCombo,  ComboBox<Integer> ivaCombo) {
 
-        if (categoria == null) {
-            showInlineError(errorLabel, "Seleziona una categoria.");
-            return false;
-        }
+		if (nomeNormalizzato.isBlank()) {
+			showInlineError(errorLabel, "Inserisci il nome dell'articolo.");
+			setFieldError(nomeField);
+			nomeField.requestFocus();
+		return false;
+		}
+		
+		if (categoria == null) {
+			showInlineError(errorLabel, "Seleziona una categoria.");
+			setFieldError(categoriaCombo);
+			categoriaCombo.requestFocus();
+			return false;
+		}
+		
+		if (iva == null) {
+			showInlineError(errorLabel, "Seleziona l'IVA.");
+			setFieldError(ivaCombo);
+			ivaCombo.requestFocus();
+			return false;
+		}
+		
+		return true;
+	}
 
-        if (iva == null) {
-            showInlineError(errorLabel, "Seleziona l'IVA.");
-            return false;
-        }
-
-        return true;
-    }
-
-    private BigDecimal parsePrezzoOrShowError(Label errorLabel, String prezzoInput) {
+    private BigDecimal parsePrezzoOrShowError(Label errorLabel, String prezzoInput, TextField prezzoField) {
         String prezzoNormalizzato = normalizePrezzo(prezzoInput);
 
         if (prezzoNormalizzato.isBlank()) {
             showInlineError(errorLabel, "Inserisci il prezzo dell'articolo.");
+            setFieldError(prezzoField);
+            prezzoField.requestFocus();
             return null;
         }
 
         if (!isPrezzoValido(prezzoNormalizzato)) {
             showInlineError(errorLabel, "Inserisci un prezzo valido, ad esempio 6.50");
+            setFieldError(prezzoField);
+            prezzoField.requestFocus();
             return null;
         }
 
@@ -501,4 +532,24 @@ public class SchedaArticoloView {
 			iva
 		);
 	}
+    
+    private void setFieldError(Region field) {
+        field.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #ef4444;
+            -fx-border-width: 2;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-padding: 0 12 0 12;
+            -fx-font-size: 14px;
+        """);
+    }
+    
+    private void resetFieldStyle(TextField field) {
+        styleTextField(field, field.getPromptText());
+    }
+
+    private void resetComboStyle(ComboBox<?> combo) {
+        styleComboBox(combo);
+    }
 }
