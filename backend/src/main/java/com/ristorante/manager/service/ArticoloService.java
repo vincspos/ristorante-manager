@@ -4,6 +4,8 @@ import com.ristorante.manager.dto.ArticoloRequest;
 import com.ristorante.manager.dto.ArticoloResponse;
 import com.ristorante.manager.entity.Articolo;
 import com.ristorante.manager.entity.CategoriaArticolo;
+import com.ristorante.manager.exception.BadRequestException;
+import com.ristorante.manager.exception.ResourceNotFoundException;
 import com.ristorante.manager.repository.ArticoloRepository;
 import com.ristorante.manager.repository.CategoriaArticoloRepository;
 import org.springframework.stereotype.Service;
@@ -48,7 +50,7 @@ public class ArticoloService {
 
     public ArticoloResponse update(Long id, ArticoloRequest request) {
         Articolo articolo = articoloRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Articolo non trovato con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Articolo non trovato con id: " + id));
 
         validateArticolo(request);
 
@@ -69,7 +71,7 @@ public class ArticoloService {
 
     public ArticoloResponse updateStato(Long id, Boolean attivo) {
         Articolo articolo = articoloRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Articolo non trovato con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Articolo non trovato con id: " + id));
 
         articolo.setAttivo(attivo);
         return toResponse(articoloRepository.save(articolo));
@@ -80,17 +82,17 @@ public class ArticoloService {
                 || request.getPrezzo() == null
                 || request.getCategoriaId() == null
                 || request.getIva() == null) {
-            throw new RuntimeException("Compila tutti i campi obbligatori");
+            throw new BadRequestException("Compila tutti i campi obbligatori");
         }
 
         if (request.getPrezzo().doubleValue() < 0) {
-            throw new RuntimeException("Il prezzo non può essere negativo");
+            throw new BadRequestException("Il prezzo non può essere negativo");
         }
     }
 
     private CategoriaArticolo loadCategoria(Long categoriaId) {
         return categoriaArticoloRepository.findById(categoriaId)
-                .orElseThrow(() -> new RuntimeException("Categoria non trovata con id: " + categoriaId));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria non trovata con id: " + categoriaId));
     }
 
     private ArticoloResponse toResponse(Articolo articolo) {
