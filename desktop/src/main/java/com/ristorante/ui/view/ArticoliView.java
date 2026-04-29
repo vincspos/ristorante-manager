@@ -4,7 +4,6 @@ import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.ArticoloDTO;
 import com.ristorante.ui.service.ArticoloService;
 import com.ristorante.ui.util.UiDialogs;
-import com.ristorante.ui.model.CategoriaArticoloDTO;
 import com.ristorante.ui.service.CategoriaArticoloService;
 
 import javafx.geometry.Insets;
@@ -16,6 +15,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.Node;
+import javafx.scene.shape.SVGPath;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -211,9 +211,9 @@ public class ArticoliView {
         });
 
         TableColumn<ArticoloDTO, Void> colAzioni = new TableColumn<>("Azioni");
-        colAzioni.setPrefWidth(220);
-        colAzioni.setMinWidth(220);
-        colAzioni.setMaxWidth(220);
+        colAzioni.setPrefWidth(150);
+        colAzioni.setMinWidth(150);
+        colAzioni.setMaxWidth(150);
         colAzioni.setResizable(false);
         colAzioni.setStyle("-fx-alignment: CENTER;");
 
@@ -262,37 +262,19 @@ public class ArticoliView {
         });
 
         colAzioni.setCellFactory(param -> new TableCell<>() {
-            private final Button editButton = new Button("Modifica");
-            private final Button toggleButton = new Button("Disattiva");
-            private final Button deleteButton = new Button("Elimina");
-            private final HBox actionsBox = new HBox(8, editButton, toggleButton, deleteButton);
+        	private final Button editButton = new Button();
+        	private final Button toggleButton = new Button();
+        	private final Button deleteButton = new Button();
+        	private final HBox actionsBox = new HBox(8, editButton, toggleButton, deleteButton);
 
             {
                 actionsBox.setAlignment(Pos.CENTER);
 
-                editButton.setPrefHeight(32);
-                editButton.setStyle("""
-                    -fx-background-color: #2563eb;
-                    -fx-text-fill: white;
-                    -fx-font-size: 12px;
-                    -fx-font-weight: bold;
-                    -fx-background-radius: 8;
-                    -fx-cursor: hand;
-                    -fx-padding: 0 12 0 12;
-                """);
-                
-                deleteButton.setPrefHeight(32);
-                deleteButton.setStyle("""
-                    -fx-background-color: #7f1d1d;
-                    -fx-text-fill: white;
-                    -fx-font-size: 12px;
-                    -fx-font-weight: bold;
-                    -fx-background-radius: 8;
-                    -fx-cursor: hand;
-                    -fx-padding: 0 12 0 12;
-                """);
+                styleActionIconButton(editButton, "#2563eb", createEditIcon());
+                styleActionIconButton(deleteButton, "#dc2626", createDeleteIcon());
 
-                toggleButton.setPrefHeight(32);
+                editButton.setTooltip(new Tooltip("Modifica articolo"));
+                deleteButton.setTooltip(new Tooltip("Elimina articolo"));
 
                 editButton.setOnAction(event -> {
                     ArticoloDTO articolo = getTableView().getItems().get(getIndex());
@@ -324,27 +306,11 @@ public class ArticoliView {
                 ArticoloDTO articolo = getTableView().getItems().get(getIndex());
 
                 if (articolo.isAttivo()) {
-                    toggleButton.setText("Disattiva");
-                    toggleButton.setStyle("""
-                        -fx-background-color: #dc2626;
-                        -fx-text-fill: white;
-                        -fx-font-size: 12px;
-                        -fx-font-weight: bold;
-                        -fx-background-radius: 8;
-                        -fx-cursor: hand;
-                        -fx-padding: 0 12 0 12;
-                    """);
+                    styleActionIconButton(toggleButton, "#f97316", createPauseIcon());
+                    toggleButton.setTooltip(new Tooltip("Disattiva articolo"));
                 } else {
-                    toggleButton.setText("Riattiva");
-                    toggleButton.setStyle("""
-                        -fx-background-color: #0f766e;
-                        -fx-text-fill: white;
-                        -fx-font-size: 12px;
-                        -fx-font-weight: bold;
-                        -fx-background-radius: 8;
-                        -fx-cursor: hand;
-                        -fx-padding: 0 12 0 12;
-                    """);
+                    styleActionIconButton(toggleButton, "#6b7280", createRefreshIcon());
+                    toggleButton.setTooltip(new Tooltip("Riattiva articolo"));
                 }
 
                 setGraphic(actionsBox);
@@ -568,5 +534,51 @@ public class ArticoliView {
             -fx-padding: 0 12 0 12;
             -fx-font-size: 14px;
         """);
+    }
+    
+    private void styleActionIconButton(Button button, String backgroundColor, SVGPath icon) {
+        button.setText(null);
+        button.setGraphic(icon);
+        button.setPrefSize(34, 34);
+        button.setMinSize(34, 34);
+        button.setMaxSize(34, 34);
+
+        button.setStyle("""
+            -fx-background-color: %s;
+            -fx-background-radius: 9;
+            -fx-cursor: hand;
+            -fx-padding: 0;
+        """.formatted(backgroundColor));
+        
+        button.setOnMouseEntered(e ->
+        button.setStyle(button.getStyle() + "-fx-opacity: 0.85;"));
+
+        button.setOnMouseExited(e ->
+        button.setStyle(button.getStyle().replace("-fx-opacity: 0.85;", "")));
+    }
+
+    private SVGPath createIcon(String content) {
+        SVGPath icon = new SVGPath();
+        icon.setContent(content);
+        icon.setFill(Color.WHITE);
+        icon.setScaleX(0.72);
+        icon.setScaleY(0.72);
+        return icon;
+    }
+
+    private SVGPath createEditIcon() {
+        return createIcon("M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z");
+    }
+
+    private SVGPath createPauseIcon() {
+        return createIcon("M6 5h4v14H6V5zm8 0h4v14h-4V5z");
+    }
+
+    private SVGPath createRefreshIcon() {
+        return createIcon("M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z");
+    }
+
+    private SVGPath createDeleteIcon() {
+        return createIcon("M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z M8 9h8v10H8V9z M15.5 4l-1-1h-5l-1 1H5v2h14V4z");
     }
 }
