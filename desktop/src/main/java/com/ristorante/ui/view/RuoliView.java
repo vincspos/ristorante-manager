@@ -1,5 +1,6 @@
 package com.ristorante.ui.view;
 
+import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.RuoloDTO;
 import com.ristorante.ui.service.RuoloService;
 import com.ristorante.ui.util.UiDialogs;
@@ -505,12 +506,12 @@ public class RuoliView {
                 return;
             }
 
-            boolean ok = ruoloService.createRuolo(
-            		codiceNormalizzato,
+            ServiceResult result = ruoloService.createRuolo(
+                    codiceNormalizzato,
                     descrizione.trim()
             );
 
-            if (!ok) {
+            if (!result.isSuccess()){
                 errorLabel.setText("Impossibile creare il ruolo. Verifica i dati o il backend.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
@@ -615,14 +616,14 @@ public class RuoliView {
                 return;
             }
 
-            boolean ok = ruoloService.updateRuolo(
+            ServiceResult result =  ruoloService.updateRuolo(
                     ruolo.getId(),
                     codiceNormalizzato,
                     descrizione.trim(),
                     ruolo.isAttivo()
             );
 
-            if (!ok) {
+            if (!result.isSuccess()) {
                 errorLabel.setText("Impossibile aggiornare il ruolo.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
@@ -652,17 +653,17 @@ public class RuoliView {
     	);
 
     	if (confermato) {
-    	    boolean ok = ruoloService.updateStatoRuolo(ruolo.getId(), !ruolo.isAttivo());
+    		ServiceResult result = ruoloService.updateStatoRuolo(ruolo.getId(), !ruolo.isAttivo());
 
-    	    if (ok) {
-    	        refreshTable();
-    	    } else {
-    	        UiDialogs.showError(
-    	                "Errore",
-    	                "Operazione non riuscita",
-    	                "Non è stato possibile aggiornare lo stato del ruolo."
-    	        );
-    	    }
+    		if (result.isSuccess()) {
+    		    refreshTable();
+    		} else {
+    		    UiDialogs.showError(
+    		            "Errore",
+    		            "Operazione non riuscita",
+    		            result.getMessage()
+    		    );
+    		}
     	}
     }
     
@@ -674,9 +675,9 @@ public class RuoliView {
         );
 
         if (confermato) {
-            boolean ok = ruoloService.deleteRuolo(ruolo.getId());
+        	ServiceResult result = ruoloService.deleteRuolo(ruolo.getId());
 
-            if (ok) {
+        	if (result.isSuccess()) {
                 refreshTable();
 
                 UiDialogs.showSuccess(
@@ -688,7 +689,7 @@ public class RuoliView {
                 UiDialogs.showError(
                         "Errore",
                         "Eliminazione non riuscita",
-                        "Impossibile eliminare il ruolo. Verifica che non sia associato a utenti."
+                        result.getMessage()
                 );
             }
         }

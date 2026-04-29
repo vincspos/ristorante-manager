@@ -1,6 +1,7 @@
 package com.ristorante.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.CategoriaArticoloDTO;
 
 import java.net.URI;
@@ -47,7 +48,7 @@ public class CategoriaArticoloService {
         return lista;
     }
 
-    public boolean createCategoria(String nome, String colore) {
+    public ServiceResult createCategoria(String nome, String colore) {
         try {
             String jsonInput = """
                 {
@@ -67,15 +68,15 @@ public class CategoriaArticoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
 
-    public boolean updateCategoria(Long id, String nome, String colore, boolean attivo) {
+    public ServiceResult updateCategoria(Long id, String nome, String colore, boolean attivo) {
         try {
             String jsonInput = """
                 {
@@ -96,15 +97,15 @@ public class CategoriaArticoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
 
-    public boolean updateStatoCategoria(Long id, boolean attivo) {
+    public ServiceResult updateStatoCategoria(Long id, boolean attivo) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -122,15 +123,15 @@ public class CategoriaArticoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
 
-    public boolean deleteCategoria(Long id) {
+    public ServiceResult deleteCategoria(Long id) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -141,11 +142,39 @@ public class CategoriaArticoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
+    }
+    
+    private ServiceResult handleResponse(HttpResponse<String> response) {
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return ServiceResult.ok();
+        }
+
+        String message = extractErrorMessage(response.body());
+
+        if (message == null || message.isBlank()) {
+            message = "Operazione non riuscita.";
+        }
+
+        return ServiceResult.fail(message);
+    }
+
+    private String extractErrorMessage(String responseBody) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            var node = mapper.readTree(responseBody);
+
+            if (node.hasNonNull("message")) {
+                return node.get("message").asText();
+            }
+        } catch (Exception ignored) {
+        }
+
+        return null;
     }
 }

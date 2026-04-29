@@ -1,5 +1,6 @@
 package com.ristorante.ui.view;
 
+import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.CategoriaArticoloDTO;
 import com.ristorante.ui.service.CategoriaArticoloService;
 import com.ristorante.ui.util.UiDialogs;
@@ -488,9 +489,9 @@ public class CategorieArticoliView {
                 return;
             }
 
-            boolean ok = categoriaService.createCategoria(nomeNormalizzato, coloreHex);
+            ServiceResult result = categoriaService.createCategoria(nomeNormalizzato, coloreHex);
 
-            if (!ok) {
+            if (!result.isSuccess()) {
                 errorLabel.setText("Impossibile creare la categoria. Verifica i dati o il backend.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
@@ -593,14 +594,14 @@ public class CategorieArticoliView {
                 return;
             }
 
-            boolean ok = categoriaService.updateCategoria(
+            ServiceResult result = categoriaService.updateCategoria(
                     categoria.getId(),
                     nomeNormalizzato,
                     coloreHex,
                     categoria.isAttivo()
             );
 
-            if (!ok) {
+            if (!result.isSuccess())  {
                 errorLabel.setText("Impossibile aggiornare la categoria.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
@@ -630,20 +631,20 @@ public class CategorieArticoliView {
         );
 
         if (confermato) {
-            boolean ok = categoriaService.updateStatoCategoria(
-                    categoria.getId(),
-                    !categoria.isAttivo()
-            );
+        	ServiceResult result = categoriaService.updateStatoCategoria(
+        	        categoria.getId(),
+        	        !categoria.isAttivo()
+        	);
 
-            if (ok) {
-                refreshTable();
-            } else {
-                UiDialogs.showError(
-                        "Errore",
-                        "Operazione non riuscita",
-                        "Non è stato possibile aggiornare lo stato della categoria."
-                );
-            }
+        	if (result.isSuccess()) {
+        	    refreshTable();
+        	} else {
+        	    UiDialogs.showError(
+        	            "Errore",
+        	            "Operazione non riuscita",
+        	            result.getMessage()
+        	    );
+        	}
         }
     }
 
@@ -655,9 +656,9 @@ public class CategorieArticoliView {
     	);
 
     	if (confermato) {
-    	    boolean ok = categoriaService.deleteCategoria(categoria.getId());
+    		ServiceResult result = categoriaService.deleteCategoria(categoria.getId());
 
-    	    if (ok) {
+    		if (result.isSuccess()) {
     	        refreshTable();
 
     	        UiDialogs.showSuccess(
@@ -670,7 +671,7 @@ public class CategorieArticoliView {
     	        UiDialogs.showError(
     	                "Errore",
     	                "Eliminazione non riuscita",
-    	                "Impossibile eliminare la categoria."
+    	                result.getMessage()
     	        );
     	    }
     	}

@@ -1,6 +1,7 @@
 package com.ristorante.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.RuoloDTO;
 
 import java.net.URI;
@@ -47,7 +48,7 @@ public class RuoloService {
         return lista;
     }
 
-    public boolean createRuolo(String codice, String descrizione) {
+    public ServiceResult createRuolo(String codice, String descrizione) {
         try {
             String jsonInput = """
                 {
@@ -67,15 +68,15 @@ public class RuoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
 
-    public boolean updateRuolo(Long id, String codice, String descrizione, boolean attivo) {
+    public ServiceResult updateRuolo(Long id, String codice, String descrizione, boolean attivo) {
         try {
             String jsonInput = """
                 {
@@ -96,15 +97,15 @@ public class RuoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
 
-    public boolean updateStatoRuolo(Long id, boolean attivo) {
+    public ServiceResult updateStatoRuolo(Long id, boolean attivo) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -122,15 +123,15 @@ public class RuoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
     
-    public boolean deleteRuolo(Long id) {
+    public ServiceResult deleteRuolo(Long id) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -141,11 +142,39 @@ public class RuoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
+    }
+    
+    private ServiceResult handleResponse(HttpResponse<String> response) {
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return ServiceResult.ok();
+        }
+
+        String message = extractErrorMessage(response.body());
+
+        if (message == null || message.isBlank()) {
+            message = "Operazione non riuscita.";
+        }
+
+        return ServiceResult.fail(message);
+    }
+
+    private String extractErrorMessage(String responseBody) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            var node = mapper.readTree(responseBody);
+
+            if (node.hasNonNull("message")) {
+                return node.get("message").asText();
+            }
+        } catch (Exception ignored) {
+        }
+
+        return null;
     }
 }

@@ -1,6 +1,7 @@
 package com.ristorante.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.ArticoloDTO;
 
 import java.math.BigDecimal;
@@ -53,12 +54,12 @@ public class ArticoloService {
         return lista;
     }
 
-    public boolean createArticolo(String nome, String descrizione,
+    public ServiceResult createArticolo(String nome, String descrizione,
     							BigDecimal prezzo, Long categoriaId, Integer iva) {
         try {
         	
         	if (categoriaId == null) {
-                return false;
+        		return ServiceResult.fail("Seleziona una categoria.");
             }
         	
         	String jsonInput = """
@@ -82,21 +83,21 @@ public class ArticoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
 
-    public boolean updateArticolo(Long id, String nome,
+    public ServiceResult updateArticolo(Long id, String nome,
             String descrizione, BigDecimal prezzo,
             Long categoriaId, Integer iva, boolean attivo) {
         try {
         	
 			 if (categoriaId == null) {
-			     return false;
+				 return ServiceResult.fail("Seleziona una categoria.");
 			 }
         	 
         	String jsonInput = """
@@ -120,15 +121,15 @@ public class ArticoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
 
-    public boolean updateStatoArticolo(Long id, boolean attivo) {
+    public ServiceResult updateStatoArticolo(Long id, boolean attivo) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -146,11 +147,39 @@ public class ArticoloService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
+    }
+    
+    private ServiceResult handleResponse(HttpResponse<String> response) {
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return ServiceResult.ok();
+        }
+
+        String message = extractErrorMessage(response.body());
+
+        if (message == null || message.isBlank()) {
+            message = "Operazione non riuscita.";
+        }
+
+        return ServiceResult.fail(message);
+    }
+
+    private String extractErrorMessage(String responseBody) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            var node = mapper.readTree(responseBody);
+
+            if (node.hasNonNull("message")) {
+                return node.get("message").asText();
+            }
+        } catch (Exception ignored) {
+        }
+
+        return null;
     }
 }

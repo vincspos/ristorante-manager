@@ -1,6 +1,7 @@
 package com.ristorante.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.RuoloDTO;
 import com.ristorante.ui.model.UtenteDTO;
 
@@ -83,7 +84,7 @@ public class UtenteService {
         return lista;
     }
 
-    public boolean createUtente(String username, String password, String nome, String cognome, RuoloDTO ruolo) {
+    public ServiceResult createUtente(String username, String password, String nome, String cognome, RuoloDTO ruolo) {
         try {
             String jsonInput = """
                 {
@@ -108,15 +109,15 @@ public class UtenteService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
     
-    public boolean updateUtente(Long id, String username, String nome, String cognome, RuoloDTO ruolo, boolean attivo) {
+    public ServiceResult updateUtente(Long id, String username, String nome, String cognome, RuoloDTO ruolo, boolean attivo) {
         try {
             String jsonInput = """
                 {
@@ -141,14 +142,14 @@ public class UtenteService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
     }
     
-    public boolean updateStatoUtente(Long id, boolean attivo) {
+    public ServiceResult updateStatoUtente(Long id, boolean attivo) {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
@@ -166,10 +167,38 @@ public class UtenteService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            return handleResponse(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return ServiceResult.fail("Impossibile comunicare con il server.");
         }
+    }
+    
+    private ServiceResult handleResponse(HttpResponse<String> response) {
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return ServiceResult.ok();
+        }
+
+        String message = extractErrorMessage(response.body());
+
+        if (message == null || message.isBlank()) {
+            message = "Operazione non riuscita.";
+        }
+
+        return ServiceResult.fail(message);
+    }
+
+    private String extractErrorMessage(String responseBody) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            var node = mapper.readTree(responseBody);
+
+            if (node.hasNonNull("message")) {
+                return node.get("message").asText();
+            }
+        } catch (Exception ignored) {
+        }
+
+        return null;
     }
 }

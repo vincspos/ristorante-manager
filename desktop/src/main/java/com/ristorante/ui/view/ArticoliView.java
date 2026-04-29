@@ -1,5 +1,6 @@
 package com.ristorante.ui.view;
 
+import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.ArticoloDTO;
 import com.ristorante.ui.service.ArticoloService;
 import com.ristorante.ui.util.UiDialogs;
@@ -465,17 +466,17 @@ public class ArticoliView {
     	);
 
     	if (confermato) {
-    	    boolean ok = articoloService.updateStatoArticolo(articolo.getId(), !articolo.isAttivo());
+    		ServiceResult result = articoloService.updateStatoArticolo(articolo.getId(), !articolo.isAttivo());
 
-    	    if (ok) {
-    	    	refreshData();
-    	    } else {
-    	        UiDialogs.showError(
-    	                "Errore",
-    	                "Operazione non riuscita",
-    	                "Non è stato possibile aggiornare lo stato dell'articolo."
-    	        );
-    	    }
+    		if (result.isSuccess()) {
+    		    refreshData();
+    		} else {
+    		    UiDialogs.showError(
+    		            "Errore",
+    		            "Operazione non riuscita",
+    		            result.getMessage()
+    		    );
+    		}
     	}
     }
 

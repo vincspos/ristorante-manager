@@ -3,6 +3,7 @@ package com.ristorante.ui.view;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.RuoloDTO;
 import com.ristorante.ui.model.UtenteDTO;
 import com.ristorante.ui.service.UtenteService;
@@ -477,9 +478,9 @@ public class UtentiView {
                 return;
             }
 
-            boolean ok = utenteService.createUtente(usernameNormalizzato, passwordNormalizzata, nomeNormalizzato, cognomeNormalizzato, ruolo);
+            ServiceResult result = utenteService.createUtente(usernameNormalizzato, passwordNormalizzata, nomeNormalizzato, cognomeNormalizzato, ruolo);
 
-            if (!ok) {
+            if (!result.isSuccess()) {
                 errorLabel.setText("Impossibile creare l'utente. Verifica i dati o il backend.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
@@ -811,7 +812,7 @@ public class UtentiView {
                 return;
             }
             
-            boolean ok = utenteService.updateUtente(
+            ServiceResult result = utenteService.updateUtente(
                     utente.getId(),
                     usernameNormalizzato,
                     nomeNormalizzato,
@@ -820,7 +821,7 @@ public class UtentiView {
                     utente.isAttivo()
             );
 
-            if (!ok) {
+            if (!result.isSuccess()) {
                 errorLabel.setText("Impossibile aggiornare l'utente.");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
@@ -851,17 +852,17 @@ public class UtentiView {
     	);
 
     	if (confermato) {
-    	    boolean ok = utenteService.updateStatoUtente(utente.getId(), !utente.isAttivo());
+    		ServiceResult result = utenteService.updateStatoUtente(utente.getId(), !utente.isAttivo());
 
-    	    if (ok) {
-    	        refreshTable();
-    	    } else {
-    	        UiDialogs.showError(
-    	                "Errore",
-    	                "Operazione non riuscita",
-    	                "Non è stato possibile aggiornare lo stato dell'utente."
-    	        );
-    	    }
+    		if (result.isSuccess()) {
+    		    refreshTable();
+    		} else {
+    		    UiDialogs.showError(
+    		            "Errore",
+    		            "Operazione non riuscita",
+    		            result.getMessage()
+    		    );
+    		}
     	}
     }
     

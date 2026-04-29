@@ -5,6 +5,7 @@ import com.ristorante.ui.model.CategoriaArticoloDTO;
 import com.ristorante.ui.service.ArticoloService;
 import com.ristorante.ui.service.CategoriaArticoloService;
 import com.ristorante.ui.util.UiDialogs;
+import com.ristorante.ui.common.ServiceResult;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -238,7 +239,7 @@ public class SchedaArticoloView {
 		        return;
 		    }
 		
-		    boolean ok = saveArticolo(
+		    ServiceResult result = saveArticolo(
 		            nomeNormalizzato,
 		            descrizioneNormalizzata,
 		            prezzoValue,
@@ -246,11 +247,9 @@ public class SchedaArticoloView {
 		            iva,
 		            attivo
 		    );
-		
-		    if (!ok) {
-		        showInlineError(errorLabel, editMode
-		                ? "Impossibile aggiornare l'articolo."
-		                : "Impossibile creare l'articolo.");
+
+		    if (!result.isSuccess()) {
+		        showInlineError(errorLabel, result.getMessage());
 		        return;
 		    }
 		
@@ -509,8 +508,8 @@ public class SchedaArticoloView {
         return new BigDecimal(prezzoNormalizzato);
     }
     
-    private boolean saveArticolo(String nomeNormalizzato, String descrizioneNormalizzata, BigDecimal prezzoValue,
-            CategoriaArticoloDTO categoria,  Integer iva, boolean attivo) {
+    private ServiceResult saveArticolo(String nomeNormalizzato, String descrizioneNormalizzata, BigDecimal prezzoValue,
+            CategoriaArticoloDTO categoria, Integer iva, boolean attivo) {
     	
 		if (editMode && articolo != null) {
 			return articoloService.updateArticolo(
