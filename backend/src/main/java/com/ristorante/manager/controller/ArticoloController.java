@@ -40,4 +40,9 @@ public class ArticoloController {
         Boolean attivo = payload.get("attivo");
         return articoloService.updateStato(id, attivo);
     }
+    
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        articoloService.delete(id);
+    }
 }

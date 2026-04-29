@@ -155,6 +155,25 @@ public class ArticoloService {
         }
     }
     
+    public ServiceResult deleteArticolo(Long id) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/articoli/" + id))
+                    .DELETE()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            return handleResponse(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ServiceResult.fail("Impossibile comunicare con il server.");
+        }
+    }
+    
     private ServiceResult handleResponse(HttpResponse<String> response) {
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             return ServiceResult.ok();

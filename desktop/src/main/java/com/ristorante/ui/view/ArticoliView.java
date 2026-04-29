@@ -264,7 +264,8 @@ public class ArticoliView {
         colAzioni.setCellFactory(param -> new TableCell<>() {
             private final Button editButton = new Button("Modifica");
             private final Button toggleButton = new Button("Disattiva");
-            private final HBox actionsBox = new HBox(8, editButton, toggleButton);
+            private final Button deleteButton = new Button("Elimina");
+            private final HBox actionsBox = new HBox(8, editButton, toggleButton, deleteButton);
 
             {
                 actionsBox.setAlignment(Pos.CENTER);
@@ -272,6 +273,17 @@ public class ArticoliView {
                 editButton.setPrefHeight(32);
                 editButton.setStyle("""
                     -fx-background-color: #2563eb;
+                    -fx-text-fill: white;
+                    -fx-font-size: 12px;
+                    -fx-font-weight: bold;
+                    -fx-background-radius: 8;
+                    -fx-cursor: hand;
+                    -fx-padding: 0 12 0 12;
+                """);
+                
+                deleteButton.setPrefHeight(32);
+                deleteButton.setStyle("""
+                    -fx-background-color: #7f1d1d;
                     -fx-text-fill: white;
                     -fx-font-size: 12px;
                     -fx-font-weight: bold;
@@ -292,6 +304,11 @@ public class ArticoliView {
                 toggleButton.setOnAction(event -> {
                     ArticoloDTO articolo = getTableView().getItems().get(getIndex());
                     showCambioStatoConferma(articolo);
+                });
+                
+                deleteButton.setOnAction(event -> {
+                    ArticoloDTO articolo = getTableView().getItems().get(getIndex());
+                    showEliminaConferma(articolo);
                 });
             }
 
@@ -478,6 +495,34 @@ public class ArticoliView {
     		    );
     		}
     	}
+    }
+    
+    private void showEliminaConferma(ArticoloDTO articolo) {
+        boolean confermato = UiDialogs.showConfirm(
+                "Conferma eliminazione",
+                "Elimina articolo",
+                "Vuoi davvero eliminare l'articolo \"" + articolo.getNome() + "\"?"
+        );
+
+        if (confermato) {
+            ServiceResult result = articoloService.deleteArticolo(articolo.getId());
+
+            if (result.isSuccess()) {
+                refreshData();
+
+                UiDialogs.showSuccess(
+                        "Successo",
+                        "Articolo eliminato",
+                        "L'articolo è stato eliminato correttamente."
+                );
+            } else {
+                UiDialogs.showError(
+                        "Errore",
+                        "Eliminazione non riuscita",
+                        result.getMessage()
+                );
+            }
+        }
     }
 
     private void sortArticoliList() {

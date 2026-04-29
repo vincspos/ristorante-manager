@@ -76,6 +76,13 @@ public class ArticoloService {
         articolo.setAttivo(attivo);
         return toResponse(articoloRepository.save(articolo));
     }
+    
+    public void delete(Long id) {
+        Articolo articolo = articoloRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Articolo non trovato con id: " + id));
+
+        articoloRepository.delete(articolo);
+    }
 
     private void validateArticolo(ArticoloRequest request) {
         if (request.getNome() == null || request.getNome().isBlank()
