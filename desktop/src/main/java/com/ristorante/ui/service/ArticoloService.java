@@ -43,7 +43,10 @@ public class ArticoloService {
             	        node.hasNonNull("categoriaId") ? node.get("categoriaId").asLong() : null,
             	        node.hasNonNull("categoriaNome") ? node.get("categoriaNome").asText() : "",
             	        node.get("attivo").asBoolean(),
-            	        node.get("iva").asInt()
+            	        node.get("iva").asInt(),
+            	        node.hasNonNull("quantitaDisponibile") ? node.get("quantitaDisponibile").asInt() : 0,
+    	        		node.hasNonNull("sogliaWarning") ? node.get("sogliaWarning").asInt() : 0,
+    	        		node.hasNonNull("statoMagazzino") ? node.get("statoMagazzino").asText() : "DISPONIBILE"
             	));
             }
 
@@ -55,7 +58,8 @@ public class ArticoloService {
     }
 
     public ServiceResult createArticolo(String nome, String descrizione,
-    							BigDecimal prezzo, Long categoriaId, Integer iva) {
+    							BigDecimal prezzo, Long categoriaId, Integer iva, Integer quantitaDisponibile,
+    							Integer sogliaWarning) {
         try {
         	
         	if (categoriaId == null) {
@@ -69,9 +73,11 @@ public class ArticoloService {
         		      "prezzo": %s,
         		      "categoriaId": %d,
         		      "attivo": true,
-        		      "iva": %s
+        		      "iva": %s,
+        		      "quantitaDisponibile": %s,
+        			  "sogliaWarning": %s
         		    }
-        		    """.formatted(nome, descrizione, prezzo, categoriaId, iva);
+        		    """.formatted(nome, descrizione, prezzo, categoriaId, iva, quantitaDisponibile, sogliaWarning);
 
             HttpClient client = HttpClient.newHttpClient();
 
@@ -93,7 +99,8 @@ public class ArticoloService {
 
     public ServiceResult updateArticolo(Long id, String nome,
             String descrizione, BigDecimal prezzo,
-            Long categoriaId, Integer iva, boolean attivo) {
+            Long categoriaId, Integer iva, boolean attivo, Integer quantitaDisponibile,
+            Integer sogliaWarning) {
         try {
         	
 			 if (categoriaId == null) {
@@ -107,9 +114,11 @@ public class ArticoloService {
         		      "prezzo": %s,
         		      "categoriaId": %d,
         		      "attivo": %s,
-        		      "iva": %s
+        		      "iva": %s,
+        		      "quantitaDisponibile": %s,
+        			  "sogliaWarning": %s
         		    }
-        		    """.formatted(nome, descrizione, prezzo, categoriaId, attivo, iva);
+        		    """.formatted(nome, descrizione, prezzo, categoriaId, attivo, iva, quantitaDisponibile, sogliaWarning);
 
             HttpClient client = HttpClient.newHttpClient();
 

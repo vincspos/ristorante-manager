@@ -165,6 +165,53 @@ public class ArticoliView {
                 setText("€ " + prezzo.setScale(2, java.math.RoundingMode.HALF_UP));
             }
         });
+        
+        TableColumn<ArticoloDTO, Integer> colQuantita = new TableColumn<>("Q.tà");
+        colQuantita.setCellValueFactory(new PropertyValueFactory<>("quantitaDisponibile"));
+        colQuantita.setStyle("-fx-alignment: CENTER;");
+        
+        TableColumn<ArticoloDTO, String> colMagazzino = new TableColumn<>("Magazzino");
+        colMagazzino.setCellValueFactory(new PropertyValueFactory<>("statoMagazzino"));
+        colMagazzino.setStyle("-fx-alignment: CENTER;");
+        colMagazzino.setCellFactory(column -> new TableCell<>() {
+            private final HBox wrapper = new HBox();
+            private final Label badge = new Label();
+
+            {
+                wrapper.setAlignment(Pos.CENTER);
+                badge.setPadding(new Insets(4, 10, 4, 10));
+                badge.setFont(Font.font("System", FontWeight.BOLD, 11));
+                badge.setTextFill(Color.WHITE);
+                wrapper.getChildren().add(badge);
+            }
+
+            @Override
+            protected void updateItem(String stato, boolean empty) {
+                super.updateItem(stato, empty);
+
+                if (empty || stato == null) {
+                    setGraphic(null);
+                    return;
+                }
+
+                switch (stato) {
+                    case "ESAURITO" -> {
+                        badge.setText("ESAURITO");
+                        badge.setStyle("-fx-background-color: #dc2626; -fx-background-radius: 999;");
+                    }
+                    case "IN_ESAURIMENTO" -> {
+                        badge.setText("IN ESAURIMENTO");
+                        badge.setStyle("-fx-background-color: #f59e0b; -fx-background-radius: 999;");
+                    }
+                    default -> {
+                        badge.setText("DISPONIBILE");
+                        badge.setStyle("-fx-background-color: #16a34a; -fx-background-radius: 999;");
+                    }
+                }
+
+                setGraphic(wrapper);
+            }
+        });
 
         TableColumn<ArticoloDTO, Boolean> colStato = new TableColumn<>("Stato");
         colStato.setCellValueFactory(new PropertyValueFactory<>("attivo"));
@@ -317,7 +364,7 @@ public class ArticoliView {
             }
         });
 
-        table.getColumns().setAll(colCodice, colNome, colCategoria, colPrezzo, colStato, colAzioni);
+        table.getColumns().setAll(colCodice, colNome, colCategoria, colPrezzo,  colQuantita, colMagazzino, colStato, colAzioni);
     }
 
     private HBox buildFiltersBar() {
@@ -515,16 +562,21 @@ public class ArticoliView {
     }
 
     private void applyRowStyle(TableRow<ArticoloDTO> row, boolean hovered) {
-        if (hovered) {
-            row.setStyle("""
-                -fx-background-color: #f8fafc;
-                -fx-border-color: transparent;
-            """);
+        ArticoloDTO articolo = row.getItem();
+
+        if (articolo == null) {
+            row.setStyle("");
+            return;
+        }
+
+        if ("ESAURITO".equals(articolo.getStatoMagazzino())) {
+            row.setStyle("-fx-background-color: #fef2f2;");
+        } else if ("IN_ESAURIMENTO".equals(articolo.getStatoMagazzino())) {
+            row.setStyle("-fx-background-color: #fffbeb;");
+        } else if (hovered) {
+            row.setStyle("-fx-background-color: #f8fafc;");
         } else {
-            row.setStyle("""
-                -fx-background-color: white;
-                -fx-border-color: transparent;
-            """);
+            row.setStyle("-fx-background-color: white;");
         }
     }
 

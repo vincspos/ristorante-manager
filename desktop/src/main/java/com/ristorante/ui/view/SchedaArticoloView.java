@@ -121,6 +121,12 @@ public class SchedaArticoloView {
         ivaCombo.setValue(10);
         ivaCombo.setPromptText("Seleziona IVA");
         styleComboBox(ivaCombo);
+        
+        TextField quantitaField = new TextField();
+        TextField sogliaWarningField = new TextField();
+
+        styleTextField(quantitaField, "Quantità disponibile");
+        styleTextField(sogliaWarningField, "Soglia warning");
 
         CheckBox attivoCheck = new CheckBox("Articolo attivo");
         attivoCheck.setStyle("""
@@ -161,6 +167,8 @@ public class SchedaArticoloView {
             codiceField.setText(articolo.getCodice());
             nomeField.setText(articolo.getNome());
             descrizioneArea.setText(articolo.getDescrizione());
+            quantitaField.setText(String.valueOf(articolo.getQuantitaDisponibile()));
+            sogliaWarningField.setText(String.valueOf(articolo.getSogliaWarning()));
 
             if (articolo.getPrezzo() != null) {
                 prezzoField.setText(articolo.getPrezzo().toString());
@@ -200,6 +208,12 @@ public class SchedaArticoloView {
                 "Gestione disponibilità dell'articolo",
                 new VBox(12, attivoCheck)
         );
+        
+        VBox magazzinoCard = buildCard(
+                "Magazzino",
+                "Quantità disponibile e soglia di avviso",
+                buildMagazzinoGrid(quantitaField, sogliaWarningField)
+        );
 
         Button saveButton = new Button(editMode ? "Salva modifiche" : "Crea articolo");
         stylePrimaryButton(saveButton);
@@ -228,10 +242,27 @@ public class SchedaArticoloView {
 		
 		    String nomeNormalizzato = nome != null ? nome.trim() : "";
 		    String descrizioneNormalizzata = descrizione != null ? descrizione.trim() : "";
+		    
+		    Integer quantita;
+		    Integer soglia;
+		    
+		    try {
+		        quantita = Integer.parseInt(quantitaField.getText().trim());
+		        soglia = Integer.parseInt(sogliaWarningField.getText().trim());
+		    } catch (Exception ex) {
+		        showInlineError(errorLabel, "Inserisci quantità e soglia warning valide.");
+		        setFieldError(quantitaField);
+		        setFieldError(sogliaWarningField);
+		        return;
+		    }
 		
 		    if (!validateNomeCategoriaIva( errorLabel, nomeNormalizzato,  categoria, iva,
 		            nomeField,  categoriaCombo,  ivaCombo )) {
 		        return;
+		    }
+		    
+		    if(!isQuantitaSogliaValida(errorLabel, quantitaField, sogliaWarningField, quantita, soglia)) {
+		    	return;
 		    }
 		
 		    BigDecimal prezzoValue = parsePrezzoOrShowError(errorLabel, prezzo, prezzoField);
@@ -245,7 +276,9 @@ public class SchedaArticoloView {
 		            prezzoValue,
 		            categoria,
 		            iva,
-		            attivo
+		            attivo,
+		            quantita,
+		            soglia
 		    );
 
 		    if (!result.isSuccess()) {
@@ -274,6 +307,7 @@ public class SchedaArticoloView {
                 errorLabel,
                 datiPrincipaliCard,
                 datiEconomiciCard,
+                magazzinoCard,
                 statoCard
         );
         content.setPadding(new Insets(4, 0, 0, 0));
@@ -468,7 +502,7 @@ public class SchedaArticoloView {
 			showInlineError(errorLabel, "Inserisci il nome dell'articolo.");
 			setFieldError(nomeField);
 			nomeField.requestFocus();
-		return false;
+			return false;
 		}
 		
 		if (categoria == null) {
@@ -482,6 +516,29 @@ public class SchedaArticoloView {
 			showInlineError(errorLabel, "Seleziona l'IVA.");
 			setFieldError(ivaCombo);
 			ivaCombo.requestFocus();
+			return false;
+		}
+		
+		return true;
+	}
+    
+    private boolean isQuantitaSogliaValida(Label errorLabel,
+            TextField quantitaField,
+            TextField sogliaWarningField,
+            Integer quantita,
+            Integer soglia) {
+
+		if (quantita < 0) {
+			showInlineError(errorLabel, "La quantità non può essere negativa.");
+			setFieldError(quantitaField);
+			quantitaField.requestFocus();
+			return false;
+		}
+		
+		if (soglia < 0) {
+			showInlineError(errorLabel, "La soglia warning non può essere negativa.");
+			setFieldError(sogliaWarningField);
+			sogliaWarningField.requestFocus();
 			return false;
 		}
 		
@@ -509,7 +566,7 @@ public class SchedaArticoloView {
     }
     
     private ServiceResult saveArticolo(String nomeNormalizzato, String descrizioneNormalizzata, BigDecimal prezzoValue,
-            CategoriaArticoloDTO categoria, Integer iva, boolean attivo) {
+            CategoriaArticoloDTO categoria, Integer iva, boolean attivo, Integer  quantita, Integer  soglia) {
     	
 		if (editMode && articolo != null) {
 			return articoloService.updateArticolo(
@@ -519,7 +576,9 @@ public class SchedaArticoloView {
 				prezzoValue,
 				categoria.getId(),
 				iva,
-				attivo
+				attivo,
+                quantita,
+                soglia
 			);
 		}
 		
@@ -528,7 +587,9 @@ public class SchedaArticoloView {
 			descrizioneNormalizzata,
 			prezzoValue,
 			categoria.getId(),
-			iva
+			iva,
+            quantita,
+            soglia
 		);
 	}
     
@@ -550,5 +611,27 @@ public class SchedaArticoloView {
 
     private void resetComboStyle(ComboBox<?> combo) {
         styleComboBox(combo);
+    }
+    
+    private VBox buildMagazzinoGrid(TextField quantitaField, TextField sogliaWarningField) {
+        GridPane grid = new GridPane();
+        grid.setHgap(18);
+        grid.setVgap(14);
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(50);
+
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(50);
+
+        grid.getColumnConstraints().addAll(col1, col2);
+
+        VBox quantitaBox = new VBox(6, createFormLabel("Quantità disponibile *"), quantitaField);
+        VBox sogliaBox = new VBox(6, createFormLabel("Soglia warning *"), sogliaWarningField);
+
+        grid.add(quantitaBox, 0, 0);
+        grid.add(sogliaBox, 1, 0);
+
+        return new VBox(grid);
     }
 }

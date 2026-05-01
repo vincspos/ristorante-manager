@@ -13,11 +13,15 @@ public class ArticoloDTO {
     private String categoriaNome;
     private boolean attivo;
     private Integer iva;
+    private Integer quantitaDisponibile;
+    private Integer sogliaWarning;
+    private String statoMagazzino;
 
     public ArticoloDTO(Long id, String codice, String nome,
                        String descrizione, BigDecimal prezzo,
                        Long categoriaId, String categoriaNome,
-                       boolean attivo, Integer iva) {
+                       boolean attivo, Integer iva, Integer quantitaDisponibile, 
+                       Integer sogliaWarning, String statoMagazzino) {
         this.id = id;
         this.codice = codice;
         this.nome = nome;
@@ -27,6 +31,9 @@ public class ArticoloDTO {
         this.categoriaNome = categoriaNome;
         this.attivo = attivo;
         this.iva = iva;
+        this.quantitaDisponibile = quantitaDisponibile;
+        this.sogliaWarning = sogliaWarning;
+        this.statoMagazzino = statoMagazzino;
     }
 
     public Long getId() { return id; }
@@ -54,4 +61,13 @@ public class ArticoloDTO {
     public void setAttivo(boolean attivo) { this.attivo = attivo; }
 
     public Integer getIva() { return iva; }
+    
+    public Integer getQuantitaDisponibile() { return quantitaDisponibile; }
+    public void setQuantitaDisponibile(Integer quantitaDisponibile) { this.quantitaDisponibile = quantitaDisponibile; }
+
+    public Integer getSogliaWarning() { return sogliaWarning; }
+    public void setSogliaWarning(Integer sogliaWarning) { this.sogliaWarning = sogliaWarning; }
+
+    public String getStatoMagazzino() { return statoMagazzino; }
+    public void setStatoMagazzino(String statoMagazzino) { this.statoMagazzino = statoMagazzino; }
 }

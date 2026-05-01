@@ -13,13 +13,16 @@ public class ArticoloResponse {
     private String categoriaNome;
     private boolean attivo;
     private Integer iva;
+    private Integer quantitaDisponibile;
+    private Integer sogliaWarning;
+    private String statoMagazzino;
 
     public ArticoloResponse() {
     }
 
     public ArticoloResponse(Long id, String codice, String nome, String descrizione,
                             BigDecimal prezzo, Long categoriaId, String categoriaNome,
-                            boolean attivo, Integer iva) {
+                            boolean attivo, Integer iva, Integer quantitaDisponibile, Integer sogliaWarning, String statoMagazzino) {
         this.id = id;
         this.codice = codice;
         this.nome = nome;
@@ -29,6 +32,9 @@ public class ArticoloResponse {
         this.categoriaNome = categoriaNome;
         this.attivo = attivo;
         this.iva = iva;
+        this.quantitaDisponibile = quantitaDisponibile;
+        this.sogliaWarning = sogliaWarning;
+        this.statoMagazzino = statoMagazzino;
     }
 
     public Long getId() { return id; }
@@ -40,4 +46,7 @@ public class ArticoloResponse {
     public String getCategoriaNome() { return categoriaNome; }
     public boolean isAttivo() { return attivo; }
     public Integer getIva() { return iva; }
+    public Integer getQuantitaDisponibile() { return quantitaDisponibile;}
+    public Integer getSogliaWarning() {return sogliaWarning;}
+    public String getStatoMagazzino() {return statoMagazzino;}
 }

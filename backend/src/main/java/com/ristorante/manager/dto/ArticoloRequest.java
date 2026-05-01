@@ -10,6 +10,8 @@ public class ArticoloRequest {
     private Long categoriaId;
     private Integer iva;
     private Boolean attivo;
+    private Integer quantitaDisponibile;
+    private Integer sogliaWarning;
 
     public String getNome() {
         return nome;
@@ -57,5 +59,20 @@ public class ArticoloRequest {
 
     public void setAttivo(Boolean attivo) {
         this.attivo = attivo;
+    }
+    public Integer getQuantitaDisponibile() {
+        return quantitaDisponibile;
+    }
+
+    public void setQuantitaDisponibile(Integer quantitaDisponibile) {
+        this.quantitaDisponibile = quantitaDisponibile;
+    }
+
+    public Integer getSogliaWarning() {
+        return sogliaWarning;
+    }
+
+    public void setSogliaWarning(Integer sogliaWarning) {
+        this.sogliaWarning = sogliaWarning;
     }
 }

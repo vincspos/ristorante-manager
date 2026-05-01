@@ -44,6 +44,8 @@ public class ArticoloService {
         articolo.setCategoria(categoria);
         articolo.setIva(request.getIva());
         articolo.setAttivo(request.getAttivo() != null ? request.getAttivo() : true);
+        articolo.setQuantitaDisponibile(request.getQuantitaDisponibile() != null ? request.getQuantitaDisponibile() : 0);
+        articolo.setSogliaWarning(request.getSogliaWarning() != null ? request.getSogliaWarning() : 0);
 
         return toResponse(articoloRepository.save(articolo));
     }
@@ -61,6 +63,8 @@ public class ArticoloService {
         articolo.setPrezzo(request.getPrezzo());
         articolo.setCategoria(categoria);
         articolo.setIva(request.getIva());
+        articolo.setQuantitaDisponibile(request.getQuantitaDisponibile());
+        articolo.setSogliaWarning(request.getSogliaWarning());
 
         if (request.getAttivo() != null) {
             articolo.setAttivo(request.getAttivo());
@@ -95,6 +99,18 @@ public class ArticoloService {
         if (request.getPrezzo().doubleValue() < 0) {
             throw new BadRequestException("Il prezzo non può essere negativo");
         }
+        
+        if (request.getQuantitaDisponibile() == null || request.getSogliaWarning() == null) {
+            throw new BadRequestException("Compila i dati di magazzino");
+        }
+
+        if (request.getQuantitaDisponibile() < 0) {
+            throw new BadRequestException("La quantità disponibile non può essere negativa");
+        }
+
+        if (request.getSogliaWarning() < 0) {
+            throw new BadRequestException("La soglia warning non può essere negativa");
+        }
     }
 
     private CategoriaArticolo loadCategoria(Long categoriaId) {
@@ -115,7 +131,10 @@ public class ArticoloService {
                 categoriaId,
                 categoriaNome,
                 Boolean.TRUE.equals(articolo.getAttivo()),
-                articolo.getIva()
+                articolo.getIva(),
+                articolo.getQuantitaDisponibile(),
+                articolo.getSogliaWarning(),
+                articolo.getStatoMagazzino()
         );
     }
 
