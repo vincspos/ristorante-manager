@@ -248,30 +248,6 @@ public class CategorieArticoliView {
                 toggleButton.setTooltip(new Tooltip("Disattiva / riattiva categoria"));
                 deleteButton.setTooltip(new Tooltip("Elimina categoria"));
 
-                editButton.setPrefHeight(32);
-                editButton.setStyle("""
-                    -fx-background-color: #2563eb;
-                    -fx-text-fill: white;
-                    -fx-font-size: 12px;
-                    -fx-font-weight: bold;
-                    -fx-background-radius: 8;
-                    -fx-cursor: hand;
-                    -fx-padding: 0 12 0 12;
-                """);
-
-                toggleButton.setPrefHeight(32);
-
-                deleteButton.setPrefHeight(32);
-                deleteButton.setStyle("""
-                    -fx-background-color: #7f1d1d;
-                    -fx-text-fill: white;
-                    -fx-font-size: 12px;
-                    -fx-font-weight: bold;
-                    -fx-background-radius: 8;
-                    -fx-cursor: hand;
-                    -fx-padding: 0 12 0 12;
-                """);
-
                 editButton.setOnAction(event -> {
                     CategoriaArticoloDTO categoria = getTableView().getItems().get(getIndex());
                     showModificaCategoriaDialog(categoria);

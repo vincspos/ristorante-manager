@@ -261,17 +261,6 @@ public class UtentiView {
                 editButton.setTooltip(new Tooltip("Modifica"));
                 disableButton.setTooltip(new Tooltip("Disattiva / riattiva utente"));
 
-                editButton.setPrefHeight(32);
-                editButton.setStyle("""
-                    -fx-background-color: #2563eb;
-                    -fx-text-fill: white;
-                    -fx-font-size: 12px;
-                    -fx-font-weight: bold;
-                    -fx-background-radius: 8;
-                    -fx-cursor: hand;
-                    -fx-padding: 0 12 0 12;
-                """);
-
                 disableButton.setPrefHeight(32);
 
                 editButton.setOnAction(event -> {
@@ -847,6 +836,12 @@ public class UtentiView {
 
     		if (result.isSuccess()) {
     		    refreshTable();
+    		    
+    		    UiDialogs.showSuccess(
+		            "Successo",
+		            "Stato aggiornato",
+		            "L'utente è stato aggiornato correttamente."
+		        );
     		} else {
     		    UiDialogs.showError(
     		            "Errore",

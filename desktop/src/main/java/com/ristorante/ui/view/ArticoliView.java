@@ -453,6 +453,12 @@ public class ArticoliView {
 
     		if (result.isSuccess()) {
     		    refreshData();
+    		    
+    		    UiDialogs.showSuccess(
+    		            "Successo",
+    		            "Stato aggiornato",
+    		            "L'articolo è stato aggiornato correttamente."
+    		        );
     		} else {
     		    UiDialogs.showError(
     		            "Errore",
@@ -550,11 +556,8 @@ public class ArticoliView {
             -fx-padding: 0;
         """.formatted(backgroundColor));
         
-        button.setOnMouseEntered(e ->
-        button.setStyle(button.getStyle() + "-fx-opacity: 0.85;"));
-
-        button.setOnMouseExited(e ->
-        button.setStyle(button.getStyle().replace("-fx-opacity: 0.85;", "")));
+        button.setOnMouseEntered(e -> button.setOpacity(0.85));
+        button.setOnMouseExited(e -> button.setOpacity(1.0));
     }
 
     private SVGPath createIcon(String content) {
