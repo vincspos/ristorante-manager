@@ -186,6 +186,32 @@ public class ArticoloService {
         }
     }
     
+    public ServiceResult updateQuantitaArticolo(Long id, int delta) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+
+            String jsonInput = """
+                {
+                  "delta": %s
+                }
+                """.formatted(delta);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/articoli/" + id + "/quantita"))
+                    .header("Content-Type", "application/json")
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonInput, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            return handleResponse(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ServiceResult.fail("Impossibile comunicare con il server.");
+        }
+    }
+    
     private ServiceResult handleResponse(HttpResponse<String> response) {
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             return ServiceResult.ok();

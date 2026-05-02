@@ -31,6 +31,7 @@ public class ArticoliView {
     private final TextField searchField = new TextField();
     private final ComboBox<String> categoriaFilter = new ComboBox<>();
     private final ComboBox<String> statoFilter = new ComboBox<>();
+    private final ComboBox<String> magazzinoFilter = new ComboBox<>();
 
     private List<ArticoloDTO> articoliCompleti = new ArrayList<>();
     private final java.util.Map<String, String> coloriCategorie = new java.util.HashMap<>();
@@ -169,6 +170,62 @@ public class ArticoliView {
         TableColumn<ArticoloDTO, Integer> colQuantita = new TableColumn<>("Q.tà");
         colQuantita.setCellValueFactory(new PropertyValueFactory<>("quantitaDisponibile"));
         colQuantita.setStyle("-fx-alignment: CENTER;");
+        colQuantita.setCellFactory(column -> new TableCell<>() {
+
+            private final Button minusButton = new Button("-");
+            private final Label quantityLabel = new Label();
+            private final Button plusButton = new Button("+");
+            private final HBox box = new HBox(4, minusButton, quantityLabel, plusButton);
+
+            {
+                box.setAlignment(Pos.CENTER);
+
+                styleSmallQuantityButton(minusButton, "#dc2626");
+                styleSmallQuantityButton(plusButton, "#16a34a");
+
+                quantityLabel.setMinWidth(30);
+                quantityLabel.setPrefWidth(30);
+                quantityLabel.setAlignment(Pos.CENTER);
+                quantityLabel.setStyle("""
+                    -fx-font-size: 12px;
+                    -fx-font-weight: bold;
+                    -fx-text-fill: #111827;
+                """);
+
+                minusButton.setOnAction(e -> {
+                    ArticoloDTO articolo = getTableView().getItems().get(getIndex());
+                    updateQuantitaRapida(articolo, -1);
+                });
+
+                plusButton.setOnAction(e -> {
+                    ArticoloDTO articolo = getTableView().getItems().get(getIndex());
+                    updateQuantitaRapida(articolo, 1);
+                });
+            }
+
+            @Override
+            protected void updateItem(Integer quantita, boolean empty) {
+                super.updateItem(quantita, empty);
+
+                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    setGraphic(null);
+                    return;
+                }
+
+                ArticoloDTO articolo = getTableView().getItems().get(getIndex());
+
+                if (!Boolean.TRUE.equals(articolo.getGestioneMagazzino())) {
+                    setText("—");
+                    setGraphic(null);
+                    return;
+                }
+
+                setText(null);
+                quantityLabel.setText(String.valueOf(articolo.getQuantitaDisponibile()));
+                minusButton.setDisable(articolo.getQuantitaDisponibile() <= 0);
+                setGraphic(box);
+            }
+        });
         
         TableColumn<ArticoloDTO, String> colMagazzino = new TableColumn<>("Magazzino");
         colMagazzino.setCellValueFactory(new PropertyValueFactory<>("statoMagazzino"));
@@ -375,9 +432,9 @@ public class ArticoliView {
 
     private HBox buildFiltersBar() {
         styleTextField(searchField, "Cerca per codice, nome o descrizione");
-        searchField.setPrefWidth(320);
+        searchField.setPrefWidth(280);
 
-        categoriaFilter.setPrefWidth(220);
+        categoriaFilter.setPrefWidth(200);
         categoriaFilter.setPrefHeight(42);
         categoriaFilter.setStyle("""
             -fx-background-color: white;
@@ -390,8 +447,26 @@ public class ArticoliView {
         statoFilter.getItems().addAll("Tutti", "Attivi", "Disattivi");
         statoFilter.setValue("Tutti");
         statoFilter.setPrefHeight(42);
-        statoFilter.setPrefWidth(180);
+        statoFilter.setPrefWidth(150);
         statoFilter.setStyle("""
+            -fx-background-color: white;
+            -fx-border-color: #d1d5db;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            -fx-font-size: 14px;
+        """);
+        
+        magazzinoFilter.getItems().addAll(
+                "Tutto magazzino",
+                "Disponibile",
+                "In esaurimento",
+                "Esaurito",
+                "Non gestito"
+        );
+        magazzinoFilter.setValue("Tutto magazzino");
+        magazzinoFilter.setPrefHeight(42);
+        magazzinoFilter.setPrefWidth(180);
+        magazzinoFilter.setStyle("""
             -fx-background-color: white;
             -fx-border-color: #d1d5db;
             -fx-border-radius: 10;
@@ -415,10 +490,11 @@ public class ArticoliView {
 
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         categoriaFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+        magazzinoFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         statoFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         aggiornaButton.setOnAction(e -> refreshData());
 
-        HBox filtersBar = new HBox(12, searchField, categoriaFilter, statoFilter, aggiornaButton);
+        HBox filtersBar = new HBox(12, searchField, categoriaFilter, statoFilter, magazzinoFilter, aggiornaButton);
         filtersBar.setAlignment(Pos.CENTER_LEFT);
 
         return filtersBar;
@@ -461,6 +537,7 @@ public class ArticoliView {
 
         String categoriaSelezionata = categoriaFilter.getValue();
         String statoSelezionato = statoFilter.getValue();
+        String magazzinoSelezionato = magazzinoFilter.getValue();
 
         List<ArticoloDTO> filtrati = articoliCompleti.stream()
                 .filter(a -> {
@@ -480,8 +557,20 @@ public class ArticoliView {
                                     || statoSelezionato.equals("Tutti")
                                     || (statoSelezionato.equals("Attivi") && a.isAttivo())
                                     || (statoSelezionato.equals("Disattivi") && !a.isAttivo());
+                    
+                    boolean matchMagazzino =
+                            magazzinoSelezionato == null
+                                    || magazzinoSelezionato.equals("Tutto magazzino")
+                                    || (magazzinoSelezionato.equals("Disponibile")
+                                        && "DISPONIBILE".equals(a.getStatoMagazzino()))
+                                    || (magazzinoSelezionato.equals("In esaurimento")
+                                        && "IN_ESAURIMENTO".equals(a.getStatoMagazzino()))
+                                    || (magazzinoSelezionato.equals("Esaurito")
+                                        && "ESAURITO".equals(a.getStatoMagazzino()))
+                                    || (magazzinoSelezionato.equals("Non gestito")
+                                        && "NON_GESTITO".equals(a.getStatoMagazzino()));
 
-                    return matchRicerca && matchCategoria && matchStato;
+                    return matchRicerca && matchCategoria && matchStato && matchMagazzino;
                 })
                 .toList();
 
@@ -646,5 +735,37 @@ public class ArticoliView {
 
     private SVGPath createDeleteIcon() {
         return createIcon("M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z M8 9h8v10H8V9z M15.5 4l-1-1h-5l-1 1H5v2h14V4z");
+    }
+    
+    private void updateQuantitaRapida(ArticoloDTO articolo, int delta) {
+        ServiceResult result = articoloService.updateQuantitaArticolo(articolo.getId(), delta);
+
+        if (result.isSuccess()) {
+            refreshData();
+        } else {
+            UiDialogs.showError(
+                    "Errore",
+                    "Quantità non aggiornata",
+                    result.getMessage()
+            );
+        }
+    }
+
+    private void styleSmallQuantityButton(Button button, String color) {
+        button.setPrefSize(24, 24);
+        button.setMinSize(24, 24);
+        button.setMaxSize(24, 24);
+        button.setStyle("""
+            -fx-background-color: %s;
+            -fx-text-fill: white;
+            -fx-font-size: 13px;
+            -fx-font-weight: bold;
+            -fx-background-radius: 7;
+            -fx-cursor: hand;
+            -fx-padding: 0;
+        """.formatted(color));
+
+        button.setOnMouseEntered(e -> button.setOpacity(0.85));
+        button.setOnMouseExited(e -> button.setOpacity(1.0));
     }
 }

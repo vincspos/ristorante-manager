@@ -45,4 +45,11 @@ public class ArticoloController {
     public void delete(@PathVariable Long id) {
         articoloService.delete(id);
     }
+    
+    @PatchMapping("/{id}/quantita")
+    public ArticoloResponse updateQuantita(@PathVariable Long id,
+                                           @RequestBody Map<String, Integer> payload) {
+        Integer delta = payload.get("delta");
+        return articoloService.updateQuantita(id, delta);
+    }
 }

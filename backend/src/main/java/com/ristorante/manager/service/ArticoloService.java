@@ -93,6 +93,29 @@ public class ArticoloService {
 
         articoloRepository.delete(articolo);
     }
+    
+    public ArticoloResponse updateQuantita(Long id, Integer delta) {
+        Articolo articolo = articoloRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Articolo non trovato con id: " + id));
+
+        if (!Boolean.TRUE.equals(articolo.getGestioneMagazzino())) {
+            throw new BadRequestException("Magazzino non gestito per questo articolo");
+        }
+
+        if (delta == null) {
+            throw new BadRequestException("Quantità non valida");
+        }
+
+        int nuovaQuantita = articolo.getQuantitaDisponibile() + delta;
+
+        if (nuovaQuantita < 0) {
+            throw new BadRequestException("La quantità non può scendere sotto zero");
+        }
+
+        articolo.setQuantitaDisponibile(nuovaQuantita);
+
+        return toResponse(articoloRepository.save(articolo));
+    }
 
     private void validateArticolo(ArticoloRequest request) {
         if (request.getNome() == null || request.getNome().isBlank()
