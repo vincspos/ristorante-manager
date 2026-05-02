@@ -13,14 +13,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.scene.Node;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class AdminDashboard {
 
@@ -89,12 +86,25 @@ public class AdminDashboard {
 
         contentArea.getChildren().setAll(new DashboardHomeView().build(username));
 
-        Scene scene = new Scene(root, 1300, 800);
+        Scene scene = new Scene(root);
         scene.getStylesheets().add(getClass().getResource("/style/app.css").toExternalForm());
 
         stage.setTitle("Ristorante Manager - Dashboard Admin");
         stage.setScene(scene);
         stage.show();
+
+        javafx.application.Platform.runLater(() -> {
+            stage.setMaximized(true);
+
+            // 🔥 forza dimensione reale schermo
+            javafx.geometry.Rectangle2D screenBounds =
+                    javafx.stage.Screen.getPrimary().getVisualBounds();
+
+            stage.setX(screenBounds.getMinX());
+            stage.setY(screenBounds.getMinY());
+            stage.setWidth(screenBounds.getWidth());
+            stage.setHeight(screenBounds.getHeight());
+        });
     }
 
     private VBox buildArticoliMenuGroup() {

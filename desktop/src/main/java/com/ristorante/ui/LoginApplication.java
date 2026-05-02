@@ -144,7 +144,9 @@ public class LoginApplication extends Application {
         VBox card = new VBox(16, appTitle, subtitle, formBox);
         card.setAlignment(Pos.CENTER_LEFT);
         card.setPadding(new Insets(32));
+        card.setPrefWidth(430);
         card.setMaxWidth(430);
+        card.setMaxHeight(420);
         card.setStyle("""
             -fx-background-color: white;
             -fx-background-radius: 18;
@@ -153,7 +155,8 @@ public class LoginApplication extends Application {
         """);
 
         StackPane root = new StackPane(card);
-        root.setPadding(new Insets(40));
+        StackPane.setAlignment(card, Pos.CENTER);
+        root.setPadding(new Insets(28));
         root.setStyle("""
             -fx-background-color: linear-gradient(to bottom right, #f8fafc, #e2e8f0);
         """);
@@ -163,7 +166,7 @@ public class LoginApplication extends Application {
         stage.setTitle("Ristorante Manager - Login");
         stage.setScene(scene);
         stage.setMinWidth(900);
-        stage.setMinHeight(600);
+        stage.setMaximized(true);
         stage.show();
     }
 
