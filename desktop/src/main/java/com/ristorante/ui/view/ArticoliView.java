@@ -16,6 +16,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.Node;
 import javafx.scene.shape.SVGPath;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -176,12 +179,17 @@ public class ArticoliView {
             private final Label quantityLabel = new Label();
             private final Button plusButton = new Button("+");
             private final HBox box = new HBox(4, minusButton, quantityLabel, plusButton);
+            private Timeline holdTimeline;
 
             {
                 box.setAlignment(Pos.CENTER);
 
                 styleSmallQuantityButton(minusButton, "#dc2626");
                 styleSmallQuantityButton(plusButton, "#16a34a");
+                
+                minusButton.setTooltip(new Tooltip("Diminuisci di 1 (SHIFT = -10)"));
+                plusButton.setTooltip(new Tooltip("Aumenta di 1 (SHIFT = +10)"));
+
 
                 quantityLabel.setMinWidth(30);
                 quantityLabel.setPrefWidth(30);
@@ -192,15 +200,41 @@ public class ArticoliView {
                     -fx-text-fill: #111827;
                 """);
 
-                minusButton.setOnAction(e -> {
+                minusButton.setOnMousePressed(e -> {
                     ArticoloDTO articolo = getTableView().getItems().get(getIndex());
-                    updateQuantitaRapida(articolo, -1);
+                    int delta = e.isShiftDown() ? -10 : -1;
+
+                    updateQuantitaRapida(articolo, delta);
+                    quantityLabel.setText(String.valueOf(articolo.getQuantitaDisponibile()));
+                    minusButton.setDisable(articolo.getQuantitaDisponibile() <= 0);
+
+                    holdTimeline = new Timeline(
+                            new KeyFrame(Duration.millis(350), ev -> {}),
+                            new KeyFrame(Duration.millis(500), ev -> startHoldUpdate(delta))
+                    );
+                    holdTimeline.setCycleCount(1);
+                    holdTimeline.play();
                 });
 
-                plusButton.setOnAction(e -> {
+                plusButton.setOnMousePressed(e -> {
                     ArticoloDTO articolo = getTableView().getItems().get(getIndex());
-                    updateQuantitaRapida(articolo, 1);
+                    int delta = e.isShiftDown() ? 10 : 1;
+
+                    updateQuantitaRapida(articolo, delta);
+
+                    holdTimeline = new Timeline(
+                            new KeyFrame(Duration.millis(350), ev -> {}),
+                            new KeyFrame(Duration.millis(500), ev -> startHoldUpdate(delta))
+                    );
+                    holdTimeline.setCycleCount(1);
+                    holdTimeline.play();
                 });
+
+                minusButton.setOnMouseReleased(e -> stopHoldUpdate());
+                plusButton.setOnMouseReleased(e -> stopHoldUpdate());
+
+                minusButton.setOnMouseExited(e -> stopHoldUpdate());
+                plusButton.setOnMouseExited(e -> stopHoldUpdate());
             }
 
             @Override
@@ -224,6 +258,34 @@ public class ArticoliView {
                 quantityLabel.setText(String.valueOf(articolo.getQuantitaDisponibile()));
                 minusButton.setDisable(articolo.getQuantitaDisponibile() <= 0);
                 setGraphic(box);
+            }
+            
+            private void startHoldUpdate(int delta) {
+                stopHoldUpdate();
+
+                holdTimeline = new Timeline(
+                        new KeyFrame(Duration.millis(180), e -> {
+                            if (getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                                stopHoldUpdate();
+                                return;
+                            }
+
+                            ArticoloDTO articolo = getTableView().getItems().get(getIndex());
+                            updateQuantitaRapida(articolo, delta);
+                            quantityLabel.setText(String.valueOf(articolo.getQuantitaDisponibile()));
+                            minusButton.setDisable(articolo.getQuantitaDisponibile() <= 0);
+                        })
+                );
+
+                holdTimeline.setCycleCount(Timeline.INDEFINITE);
+                holdTimeline.play();
+            }
+
+            private void stopHoldUpdate() {
+                if (holdTimeline != null) {
+                    holdTimeline.stop();
+                    holdTimeline = null;
+                }
             }
         });
         
@@ -738,10 +800,21 @@ public class ArticoliView {
     }
     
     private void updateQuantitaRapida(ArticoloDTO articolo, int delta) {
+        if (articolo == null || !Boolean.TRUE.equals(articolo.getGestioneMagazzino())) {
+            return;
+        }
+
+        int nuovaQuantita = articolo.getQuantitaDisponibile() + delta;
+
+        if (nuovaQuantita < 0) {
+            return;
+        }
+
         ServiceResult result = articoloService.updateQuantitaArticolo(articolo.getId(), delta);
 
         if (result.isSuccess()) {
-            refreshData();
+            articolo.setQuantitaDisponibile(nuovaQuantita);
+//            table.refresh();
         } else {
             UiDialogs.showError(
                     "Errore",
@@ -768,4 +841,6 @@ public class ArticoliView {
         button.setOnMouseEntered(e -> button.setOpacity(0.85));
         button.setOnMouseExited(e -> button.setOpacity(1.0));
     }
+    
+    
 }
