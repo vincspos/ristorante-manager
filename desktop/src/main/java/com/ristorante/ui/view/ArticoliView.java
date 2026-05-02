@@ -195,6 +195,10 @@ public class ArticoliView {
                 }
 
                 switch (stato) {
+	                case "NON_GESTITO" -> {
+	                    badge.setText("NON GESTITO");
+	                    badge.setStyle("-fx-background-color: #6b7280; -fx-background-radius: 999;");
+	                }
                     case "ESAURITO" -> {
                         badge.setText("ESAURITO");
                         badge.setStyle("-fx-background-color: #dc2626; -fx-background-radius: 999;");
@@ -258,17 +262,19 @@ public class ArticoliView {
         });
 
         TableColumn<ArticoloDTO, Void> colAzioni = new TableColumn<>("Azioni");
-        colAzioni.setPrefWidth(150);
-        colAzioni.setMinWidth(150);
-        colAzioni.setMaxWidth(150);
+        colAzioni.setPrefWidth(130);
+        colAzioni.setMinWidth(130);
+        colAzioni.setMaxWidth(130);
         colAzioni.setResizable(false);
         colAzioni.setStyle("-fx-alignment: CENTER;");
 
-        colCodice.prefWidthProperty().bind(table.widthProperty().multiply(0.18));
-        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.28));
-        colCategoria.prefWidthProperty().bind(table.widthProperty().multiply(0.18));
-        colPrezzo.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
-        colStato.prefWidthProperty().bind(table.widthProperty().multiply(0.12));
+        colCodice.prefWidthProperty().bind(table.widthProperty().multiply(0.12));
+        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.24));
+        colCategoria.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
+        colPrezzo.prefWidthProperty().bind(table.widthProperty().multiply(0.10));
+        colQuantita.prefWidthProperty().bind(table.widthProperty().multiply(0.08));
+        colMagazzino.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
+        colStato.prefWidthProperty().bind(table.widthProperty().multiply(0.10));
 
         colCategoria.setCellFactory(column -> new TableCell<>() {
             private final HBox wrapper = new HBox();
@@ -568,6 +574,11 @@ public class ArticoliView {
             row.setStyle("");
             return;
         }
+        
+        if (!Boolean.TRUE.equals(articolo.getGestioneMagazzino())) {
+            row.setStyle(hovered ? "-fx-background-color: #f8fafc;" : "-fx-background-color: white;");
+            return;
+        }
 
         if ("ESAURITO".equals(articolo.getStatoMagazzino())) {
             row.setStyle("-fx-background-color: #fef2f2;");
@@ -597,9 +608,9 @@ public class ArticoliView {
     private void styleActionIconButton(Button button, String backgroundColor, SVGPath icon) {
         button.setText(null);
         button.setGraphic(icon);
-        button.setPrefSize(34, 34);
-        button.setMinSize(34, 34);
-        button.setMaxSize(34, 34);
+        button.setPrefSize(30, 30);
+        button.setMinSize(30, 30);
+        button.setMaxSize(30, 30);
 
         button.setStyle("""
             -fx-background-color: %s;

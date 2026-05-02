@@ -38,6 +38,9 @@ public class Articolo {
 
     @Column(nullable = false)
     private Integer sogliaWarning = 0;
+    
+    @Column(nullable = false)
+    private Boolean gestioneMagazzino = false;
 
     // GETTER & SETTER
 
@@ -79,8 +82,16 @@ public class Articolo {
 
     public void setSogliaWarning(Integer sogliaWarning) { this.sogliaWarning = sogliaWarning;}
     
+    public Boolean getGestioneMagazzino() {return gestioneMagazzino; }
+
+    public void setGestioneMagazzino(Boolean gestioneMagazzino) {this.gestioneMagazzino = gestioneMagazzino;}
+    
     @Transient
     public String getStatoMagazzino() {
+    	if (!Boolean.TRUE.equals(gestioneMagazzino)) {
+            return "NON_GESTITO";
+        }
+
         if (quantitaDisponibile == null || quantitaDisponibile <= 0) {
             return "ESAURITO";
         }

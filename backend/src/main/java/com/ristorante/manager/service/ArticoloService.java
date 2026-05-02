@@ -35,6 +35,8 @@ public class ArticoloService {
         validateArticolo(request);
 
         CategoriaArticolo categoria = loadCategoria(request.getCategoriaId());
+        
+        boolean gestioneMagazzino = Boolean.TRUE.equals(request.getGestioneMagazzino());
 
         Articolo articolo = new Articolo();
         articolo.setCodice(generaCodice());
@@ -44,6 +46,7 @@ public class ArticoloService {
         articolo.setCategoria(categoria);
         articolo.setIva(request.getIva());
         articolo.setAttivo(request.getAttivo() != null ? request.getAttivo() : true);
+        articolo.setGestioneMagazzino(gestioneMagazzino);
         articolo.setQuantitaDisponibile(request.getQuantitaDisponibile() != null ? request.getQuantitaDisponibile() : 0);
         articolo.setSogliaWarning(request.getSogliaWarning() != null ? request.getSogliaWarning() : 0);
 
@@ -55,6 +58,8 @@ public class ArticoloService {
                 .orElseThrow(() -> new ResourceNotFoundException("Articolo non trovato con id: " + id));
 
         validateArticolo(request);
+        
+        boolean gestioneMagazzino = Boolean.TRUE.equals(request.getGestioneMagazzino());
 
         CategoriaArticolo categoria = loadCategoria(request.getCategoriaId());
 
@@ -63,6 +68,7 @@ public class ArticoloService {
         articolo.setPrezzo(request.getPrezzo());
         articolo.setCategoria(categoria);
         articolo.setIva(request.getIva());
+        articolo.setGestioneMagazzino(gestioneMagazzino);
         articolo.setQuantitaDisponibile(request.getQuantitaDisponibile());
         articolo.setSogliaWarning(request.getSogliaWarning());
 
@@ -100,16 +106,21 @@ public class ArticoloService {
             throw new BadRequestException("Il prezzo non può essere negativo");
         }
         
-        if (request.getQuantitaDisponibile() == null || request.getSogliaWarning() == null) {
-            throw new BadRequestException("Compila i dati di magazzino");
-        }
+        boolean gestioneMagazzino = Boolean.TRUE.equals(request.getGestioneMagazzino());
 
-        if (request.getQuantitaDisponibile() < 0) {
-            throw new BadRequestException("La quantità disponibile non può essere negativa");
-        }
+        
+        if (gestioneMagazzino) {
+            if (request.getQuantitaDisponibile() == null || request.getSogliaWarning() == null) {
+                throw new BadRequestException("Compila i dati di magazzino");
+            }
 
-        if (request.getSogliaWarning() < 0) {
-            throw new BadRequestException("La soglia warning non può essere negativa");
+            if (request.getQuantitaDisponibile() < 0) {
+                throw new BadRequestException("La quantità disponibile non può essere negativa");
+            }
+
+            if (request.getSogliaWarning() < 0) {
+                throw new BadRequestException("La soglia warning non può essere negativa");
+            }
         }
     }
 
@@ -134,7 +145,8 @@ public class ArticoloService {
                 articolo.getIva(),
                 articolo.getQuantitaDisponibile(),
                 articolo.getSogliaWarning(),
-                articolo.getStatoMagazzino()
+                articolo.getStatoMagazzino(),
+                Boolean.TRUE.equals(articolo.getGestioneMagazzino())
         );
     }
 

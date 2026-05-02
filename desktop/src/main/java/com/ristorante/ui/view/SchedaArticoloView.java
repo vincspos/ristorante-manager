@@ -134,6 +134,27 @@ public class SchedaArticoloView {
             -fx-text-fill: #374151;
         """);
         attivoCheck.setSelected(true);
+        
+        CheckBox gestioneMagazzinoCheck = new CheckBox("Gestisci magazzino per questo articolo");
+        gestioneMagazzinoCheck.selectedProperty().addListener((obs, oldVal, isSelected) -> {
+            if (isSelected) {
+                gestioneMagazzinoCheck.setStyle("""
+                    -fx-font-size: 14px;
+                    -fx-text-fill: #374151;
+                """);
+            } else {
+                gestioneMagazzinoCheck.setStyle("""
+                    -fx-font-size: 14px;
+                    -fx-text-fill: #9ca3af;
+                    -fx-opacity: 0.8;
+                """);
+            }
+        });
+        
+        gestioneMagazzinoCheck.setSelected(false);
+        
+        quantitaField.disableProperty().bind(gestioneMagazzinoCheck.selectedProperty().not());
+        sogliaWarningField.disableProperty().bind(gestioneMagazzinoCheck.selectedProperty().not());
 
         Label errorLabel = new Label();
         errorLabel.setVisible(false);
@@ -167,6 +188,7 @@ public class SchedaArticoloView {
             codiceField.setText(articolo.getCodice());
             nomeField.setText(articolo.getNome());
             descrizioneArea.setText(articolo.getDescrizione());
+            gestioneMagazzinoCheck.setSelected(Boolean.TRUE.equals(articolo.getGestioneMagazzino()));
             quantitaField.setText(String.valueOf(articolo.getQuantitaDisponibile()));
             sogliaWarningField.setText(String.valueOf(articolo.getSogliaWarning()));
 
@@ -209,10 +231,19 @@ public class SchedaArticoloView {
                 new VBox(12, attivoCheck)
         );
         
+        VBox magazzinoGrid = buildMagazzinoGrid(quantitaField, sogliaWarningField);
+
+        magazzinoGrid.visibleProperty().bind(gestioneMagazzinoCheck.selectedProperty());
+        magazzinoGrid.managedProperty().bind(gestioneMagazzinoCheck.selectedProperty());
+
         VBox magazzinoCard = buildCard(
                 "Magazzino",
                 "Quantità disponibile e soglia di avviso",
-                buildMagazzinoGrid(quantitaField, sogliaWarningField)
+                new VBox(
+                        14,
+                        gestioneMagazzinoCheck,
+                        magazzinoGrid
+                )
         );
 
         Button saveButton = new Button(editMode ? "Salva modifiche" : "Crea articolo");
@@ -239,30 +270,33 @@ public class SchedaArticoloView {
 		    CategoriaArticoloDTO categoria = categoriaCombo.getValue();
 		    Integer iva = ivaCombo.getValue();
 		    boolean attivo = attivoCheck.isSelected();
+		    boolean gestioneMagazzino = gestioneMagazzinoCheck.isSelected();
 		
 		    String nomeNormalizzato = nome != null ? nome.trim() : "";
 		    String descrizioneNormalizzata = descrizione != null ? descrizione.trim() : "";
 		    
-		    Integer quantita;
-		    Integer soglia;
+		    Integer quantita = 0;
+		    Integer soglia = 0;
 		    
-		    try {
-		        quantita = Integer.parseInt(quantitaField.getText().trim());
-		        soglia = Integer.parseInt(sogliaWarningField.getText().trim());
-		    } catch (Exception ex) {
-		        showInlineError(errorLabel, "Inserisci quantità e soglia warning valide.");
-		        setFieldError(quantitaField);
-		        setFieldError(sogliaWarningField);
-		        return;
+		    if (gestioneMagazzino) {
+		        try {
+		            quantita = Integer.parseInt(quantitaField.getText().trim());
+		            soglia = Integer.parseInt(sogliaWarningField.getText().trim());
+		        } catch (Exception ex) {
+		            showInlineError(errorLabel, "Inserisci quantità e soglia warning valide.");
+		            setFieldError(quantitaField);
+		            setFieldError(sogliaWarningField);
+		            return;
+		        }
+
+		        if (!isQuantitaSogliaValida(errorLabel, quantitaField, sogliaWarningField, quantita, soglia)) {
+		            return;
+		        }
 		    }
 		
 		    if (!validateNomeCategoriaIva( errorLabel, nomeNormalizzato,  categoria, iva,
 		            nomeField,  categoriaCombo,  ivaCombo )) {
 		        return;
-		    }
-		    
-		    if(!isQuantitaSogliaValida(errorLabel, quantitaField, sogliaWarningField, quantita, soglia)) {
-		    	return;
 		    }
 		
 		    BigDecimal prezzoValue = parsePrezzoOrShowError(errorLabel, prezzo, prezzoField);
@@ -278,7 +312,8 @@ public class SchedaArticoloView {
 		            iva,
 		            attivo,
 		            quantita,
-		            soglia
+		            soglia,
+		            gestioneMagazzino
 		    );
 
 		    if (!result.isSuccess()) {
@@ -566,7 +601,7 @@ public class SchedaArticoloView {
     }
     
     private ServiceResult saveArticolo(String nomeNormalizzato, String descrizioneNormalizzata, BigDecimal prezzoValue,
-            CategoriaArticoloDTO categoria, Integer iva, boolean attivo, Integer  quantita, Integer  soglia) {
+            CategoriaArticoloDTO categoria, Integer iva, boolean attivo, Integer  quantita, Integer  soglia, boolean gestioneMagazzino) {
     	
 		if (editMode && articolo != null) {
 			return articoloService.updateArticolo(
@@ -578,7 +613,8 @@ public class SchedaArticoloView {
 				iva,
 				attivo,
                 quantita,
-                soglia
+                soglia,
+                gestioneMagazzino
 			);
 		}
 		
@@ -589,7 +625,8 @@ public class SchedaArticoloView {
 			categoria.getId(),
 			iva,
             quantita,
-            soglia
+            soglia,
+            gestioneMagazzino
 		);
 	}
     

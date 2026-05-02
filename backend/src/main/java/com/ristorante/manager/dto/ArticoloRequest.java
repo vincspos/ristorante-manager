@@ -12,6 +12,7 @@ public class ArticoloRequest {
     private Boolean attivo;
     private Integer quantitaDisponibile;
     private Integer sogliaWarning;
+    private Boolean gestioneMagazzino;
 
     public String getNome() {
         return nome;
@@ -74,5 +75,13 @@ public class ArticoloRequest {
 
     public void setSogliaWarning(Integer sogliaWarning) {
         this.sogliaWarning = sogliaWarning;
+    }
+    
+    public Boolean getGestioneMagazzino() {
+        return gestioneMagazzino;
+    }
+
+    public void setGestioneMagazzino(Boolean gestioneMagazzino) {
+        this.gestioneMagazzino = gestioneMagazzino;
     }
 }

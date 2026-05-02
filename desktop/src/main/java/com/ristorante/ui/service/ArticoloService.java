@@ -46,7 +46,8 @@ public class ArticoloService {
             	        node.get("iva").asInt(),
             	        node.hasNonNull("quantitaDisponibile") ? node.get("quantitaDisponibile").asInt() : 0,
     	        		node.hasNonNull("sogliaWarning") ? node.get("sogliaWarning").asInt() : 0,
-    	        		node.hasNonNull("statoMagazzino") ? node.get("statoMagazzino").asText() : "DISPONIBILE"
+    	        		node.hasNonNull("statoMagazzino") ? node.get("statoMagazzino").asText() : "DISPONIBILE",
+    	        		node.hasNonNull("gestioneMagazzino") ? node.get("gestioneMagazzino").asBoolean() : false
             	));
             }
 
@@ -59,7 +60,7 @@ public class ArticoloService {
 
     public ServiceResult createArticolo(String nome, String descrizione,
     							BigDecimal prezzo, Long categoriaId, Integer iva, Integer quantitaDisponibile,
-    							Integer sogliaWarning) {
+    							Integer sogliaWarning, boolean gestioneMagazzino) {
         try {
         	
         	if (categoriaId == null) {
@@ -75,9 +76,10 @@ public class ArticoloService {
         		      "attivo": true,
         		      "iva": %s,
         		      "quantitaDisponibile": %s,
-        			  "sogliaWarning": %s
+        			  "sogliaWarning": %s,
+        			  "gestioneMagazzino": %s
         		    }
-        		    """.formatted(nome, descrizione, prezzo, categoriaId, iva, quantitaDisponibile, sogliaWarning);
+        		    """.formatted(nome, descrizione, prezzo, categoriaId, iva, quantitaDisponibile, sogliaWarning, gestioneMagazzino);
 
             HttpClient client = HttpClient.newHttpClient();
 
@@ -100,7 +102,7 @@ public class ArticoloService {
     public ServiceResult updateArticolo(Long id, String nome,
             String descrizione, BigDecimal prezzo,
             Long categoriaId, Integer iva, boolean attivo, Integer quantitaDisponibile,
-            Integer sogliaWarning) {
+            Integer sogliaWarning, boolean gestioneMagazzino) {
         try {
         	
 			 if (categoriaId == null) {
@@ -116,9 +118,10 @@ public class ArticoloService {
         		      "attivo": %s,
         		      "iva": %s,
         		      "quantitaDisponibile": %s,
-        			  "sogliaWarning": %s
+        			  "sogliaWarning": %s,
+        			  "gestioneMagazzino": %s
         		    }
-        		    """.formatted(nome, descrizione, prezzo, categoriaId, attivo, iva, quantitaDisponibile, sogliaWarning);
+        		    """.formatted(nome, descrizione, prezzo, categoriaId, attivo, iva, quantitaDisponibile, sogliaWarning, gestioneMagazzino);
 
             HttpClient client = HttpClient.newHttpClient();
 
