@@ -2,12 +2,17 @@ package com.ristorante.manager.service;
 
 import com.ristorante.manager.dto.ArticoloRequest;
 import com.ristorante.manager.dto.ArticoloResponse;
+import com.ristorante.manager.dto.MovimentoMagazzinoResponse;
 import com.ristorante.manager.entity.Articolo;
 import com.ristorante.manager.entity.CategoriaArticolo;
+import com.ristorante.manager.entity.MovimentoMagazzino;
+import com.ristorante.manager.entity.TipoMovimentoMagazzino;
 import com.ristorante.manager.exception.BadRequestException;
 import com.ristorante.manager.exception.ResourceNotFoundException;
 import com.ristorante.manager.repository.ArticoloRepository;
 import com.ristorante.manager.repository.CategoriaArticoloRepository;
+import com.ristorante.manager.repository.MovimentoMagazzinoRepository;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +22,16 @@ public class ArticoloService {
 
     private final ArticoloRepository articoloRepository;
     private final CategoriaArticoloRepository categoriaArticoloRepository;
+    private final MovimentoMagazzinoRepository movimentoMagazzinoRepository;
 
-    public ArticoloService(ArticoloRepository articoloRepository,
-                           CategoriaArticoloRepository categoriaArticoloRepository) {
+    public ArticoloService(
+            ArticoloRepository articoloRepository,
+            CategoriaArticoloRepository categoriaArticoloRepository,
+            MovimentoMagazzinoRepository movimentoMagazzinoRepository
+    ) {
         this.articoloRepository = articoloRepository;
         this.categoriaArticoloRepository = categoriaArticoloRepository;
+        this.movimentoMagazzinoRepository = movimentoMagazzinoRepository;
     }
 
     public List<ArticoloResponse> findAll() {
@@ -60,6 +70,16 @@ public class ArticoloService {
         validateArticolo(request);
         
         boolean gestioneMagazzino = Boolean.TRUE.equals(request.getGestioneMagazzino());
+        
+        Integer vecchiaQuantita = articolo.getQuantitaDisponibile() != null
+                ? articolo.getQuantitaDisponibile()
+                : 0;
+
+        Integer nuovaQuantitaRichiesta = request.getQuantitaDisponibile() != null
+                ? request.getQuantitaDisponibile()
+                : 0;
+
+        int deltaMagazzino = nuovaQuantitaRichiesta - vecchiaQuantita;
 
         CategoriaArticolo categoria = loadCategoria(request.getCategoriaId());
 
@@ -71,6 +91,18 @@ public class ArticoloService {
         articolo.setGestioneMagazzino(gestioneMagazzino);
         articolo.setQuantitaDisponibile(request.getQuantitaDisponibile());
         articolo.setSogliaWarning(request.getSogliaWarning());
+        
+        if (gestioneMagazzino && deltaMagazzino != 0) {
+            MovimentoMagazzino movimento = new MovimentoMagazzino();
+            movimento.setArticolo(articolo);
+            movimento.setTipo(deltaMagazzino > 0
+                    ? TipoMovimentoMagazzino.CARICO
+                    : TipoMovimentoMagazzino.SCARICO_MANUALE);
+            movimento.setQuantita(Math.abs(deltaMagazzino));
+            movimento.setNote("Aggiornamento quantità da scheda articolo");
+
+            movimentoMagazzinoRepository.save(movimento);
+        }
 
         if (request.getAttivo() != null) {
             articolo.setAttivo(request.getAttivo());
@@ -113,8 +145,43 @@ public class ArticoloService {
         }
 
         articolo.setQuantitaDisponibile(nuovaQuantita);
+        
+        MovimentoMagazzino movimento = new MovimentoMagazzino();
+
+        movimento.setArticolo(articolo);
+
+        movimento.setTipo(
+                delta >= 0
+                        ? TipoMovimentoMagazzino.CARICO
+                		: TipoMovimentoMagazzino.SCARICO_MANUALE
+        );
+
+        movimento.setQuantita(Math.abs(delta));
+
+        movimento.setNote("Aggiornamento rapido quantità");
+
+        movimentoMagazzinoRepository.save(movimento);
 
         return toResponse(articoloRepository.save(articolo));
+    }
+    
+    public List<MovimentoMagazzinoResponse> findMovimentiByArticolo(Long articoloId) {
+        articoloRepository.findById(articoloId)
+                .orElseThrow(() -> new ResourceNotFoundException("Articolo non trovato con id: " + articoloId));
+
+        return movimentoMagazzinoRepository.findByArticoloIdOrderByDataMovimentoDesc(articoloId)
+                .stream()
+                .map(m -> new MovimentoMagazzinoResponse(
+                        m.getId(),
+                        m.getArticolo().getNome(),
+                        m.getTipo().name(),
+                        m.getQuantita(),
+                        m.getNote(),
+                        m.getDataMovimento(),
+                        m.getUtenteId(),
+                        m.getUtenteUsername()
+                ))
+                .toList();
     }
 
     private void validateArticolo(ArticoloRequest request) {

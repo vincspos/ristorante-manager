@@ -2,6 +2,7 @@ package com.ristorante.manager.controller;
 
 import com.ristorante.manager.dto.ArticoloRequest;
 import com.ristorante.manager.dto.ArticoloResponse;
+import com.ristorante.manager.dto.MovimentoMagazzinoResponse;
 import com.ristorante.manager.service.ArticoloService;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,5 +52,10 @@ public class ArticoloController {
                                            @RequestBody Map<String, Integer> payload) {
         Integer delta = payload.get("delta");
         return articoloService.updateQuantita(id, delta);
+    }
+    
+    @GetMapping("/{id}/movimenti")
+    public List<MovimentoMagazzinoResponse> getMovimentiArticolo(@PathVariable Long id) {
+        return articoloService.findMovimentiByArticolo(id);
     }
 }

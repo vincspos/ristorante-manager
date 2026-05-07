@@ -422,19 +422,19 @@ public class ArticoliView {
         });
 
         TableColumn<ArticoloDTO, Void> colAzioni = new TableColumn<>("Azioni");
-        colAzioni.setPrefWidth(130);
-        colAzioni.setMinWidth(130);
-        colAzioni.setMaxWidth(130);
+        colAzioni.setPrefWidth(180);
+        colAzioni.setMinWidth(180);
+        colAzioni.setMaxWidth(180);
         colAzioni.setResizable(false);
         colAzioni.setStyle("-fx-alignment: CENTER;");
 
-        colCodice.prefWidthProperty().bind(table.widthProperty().multiply(0.12));
-        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.24));
-        colCategoria.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
-        colPrezzo.prefWidthProperty().bind(table.widthProperty().multiply(0.10));
-        colQuantita.prefWidthProperty().bind(table.widthProperty().multiply(0.08));
+        colCodice.prefWidthProperty().bind(table.widthProperty().multiply(0.10));
+        colNome.prefWidthProperty().bind(table.widthProperty().multiply(0.18));
+        colCategoria.prefWidthProperty().bind(table.widthProperty().multiply(0.12));
+        colPrezzo.prefWidthProperty().bind(table.widthProperty().multiply(0.09));
+        colQuantita.prefWidthProperty().bind(table.widthProperty().multiply(0.12));
         colMagazzino.prefWidthProperty().bind(table.widthProperty().multiply(0.14));
-        colStato.prefWidthProperty().bind(table.widthProperty().multiply(0.10));
+        colStato.prefWidthProperty().bind(table.widthProperty().multiply(0.09));
 
         colCategoria.setCellFactory(column -> new TableCell<>() {
             private final HBox wrapper = new HBox();
@@ -477,17 +477,31 @@ public class ArticoliView {
         colAzioni.setCellFactory(param -> new TableCell<>() {
         	private final Button editButton = new Button();
         	private final Button toggleButton = new Button();
+        	private final Button storicoButton = new Button();
         	private final Button deleteButton = new Button();
-        	private final HBox actionsBox = new HBox(8, editButton, toggleButton, deleteButton);
+        	private final HBox actionsBox = new HBox(6, editButton, toggleButton, storicoButton, deleteButton);
 
             {
                 actionsBox.setAlignment(Pos.CENTER);
+                actionsBox.setPadding(new Insets(0, 4, 0, 4));
 
                 styleActionIconButton(editButton, "#2563eb", createEditIcon());
                 styleActionIconButton(deleteButton, "#dc2626", createDeleteIcon());
-
+                styleActionIconButton(storicoButton, "#7c4f2c", createHistoryIcon());
+                
+                storicoButton.setTooltip(new Tooltip("Storico magazzino"));
                 editButton.setTooltip(new Tooltip("Modifica articolo"));
                 deleteButton.setTooltip(new Tooltip("Elimina articolo"));
+                
+                storicoButton.setOnAction(event -> {
+                    ArticoloDTO articolo = getTableView().getItems().get(getIndex());
+                    // qui poi apriremo la finestra storico
+                    UiDialogs.showInfo(
+                            "Storico magazzino",
+                            articolo.getNome(),
+                            "Qui mostreremo i movimenti di magazzino dell'articolo."
+                    );
+                });
 
                 editButton.setOnAction(event -> {
                     ArticoloDTO articolo = getTableView().getItems().get(getIndex());
@@ -838,6 +852,10 @@ public class ArticoliView {
 
     private SVGPath createDeleteIcon() {
         return createIcon("M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z M8 9h8v10H8V9z M15.5 4l-1-1h-5l-1 1H5v2h14V4z");
+    }
+    
+    private SVGPath createHistoryIcon() {
+        return createIcon("M13 3a9 9 0 1 0 8.95 10h-2a7 7 0 1 1-2.05-4.95L15 11h7V4l-2.65 2.65A8.96 8.96 0 0 0 13 3z M12 7h1.5v5l4 2-.75 1.25L12 13V7z");
     }
 
     private void styleSmallQuantityButton(Button button, String color) {
