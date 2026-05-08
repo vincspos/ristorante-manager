@@ -496,11 +496,7 @@ public class ArticoliView {
                 storicoButton.setOnAction(event -> {
                     ArticoloDTO articolo = getTableView().getItems().get(getIndex());
                     // qui poi apriremo la finestra storico
-                    UiDialogs.showInfo(
-                            "Storico magazzino",
-                            articolo.getNome(),
-                            "Qui mostreremo i movimenti di magazzino dell'articolo."
-                    );
+                    new StoricoMagazzinoView().show(articolo);
                 });
 
                 editButton.setOnAction(event -> {
