@@ -13,6 +13,8 @@ public class ArticoloRequest {
     private Integer quantitaDisponibile;
     private Integer sogliaWarning;
     private Boolean gestioneMagazzino;
+    private Long utenteId;
+    private String utenteUsername;
 
     public String getNome() {
         return nome;
@@ -84,4 +86,20 @@ public class ArticoloRequest {
     public void setGestioneMagazzino(Boolean gestioneMagazzino) {
         this.gestioneMagazzino = gestioneMagazzino;
     }
+
+	public Long getUtenteId() {
+		return utenteId;
+	}
+
+	public void setUtenteId(Long utenteId) {
+		this.utenteId = utenteId;
+	}
+
+	public String getUtenteUsername() {
+		return utenteUsername;
+	}
+
+	public void setUtenteUsername(String utenteUsername) {
+		this.utenteUsername = utenteUsername;
+	}
 }

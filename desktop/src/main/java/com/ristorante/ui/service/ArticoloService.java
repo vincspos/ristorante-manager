@@ -121,9 +121,12 @@ public class ArticoloService {
         		      "iva": %s,
         		      "quantitaDisponibile": %s,
         			  "sogliaWarning": %s,
-        			  "gestioneMagazzino": %s
+        			  "gestioneMagazzino": %s,
+					  "utenteId": %s,
+					  "utenteUsername": "%s"
         		    }
-        		    """.formatted(nome, descrizione, prezzo, categoriaId, attivo, iva, quantitaDisponibile, sogliaWarning, gestioneMagazzino);
+        		    """.formatted(nome, descrizione, prezzo, categoriaId, attivo, iva, quantitaDisponibile, 
+        		    		sogliaWarning, gestioneMagazzino, SessionManager.getUtenteId(), SessionManager.getUsername());
 
             HttpClient client = HttpClient.newHttpClient();
 
@@ -228,6 +231,42 @@ public class ArticoloService {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(BASE_URL + "/articoli/" + articoloId + "/movimenti"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            ObjectMapper mapper = new ObjectMapper();
+            var jsonList = mapper.readTree(response.body());
+
+            for (var node : jsonList) {
+                lista.add(new MovimentoMagazzinoDTO(
+                        node.get("id").asLong(),
+                        node.hasNonNull("articoloNome") ? node.get("articoloNome").asText() : "",
+                        node.hasNonNull("tipo") ? node.get("tipo").asText() : "",
+                        node.hasNonNull("quantita") ? node.get("quantita").asInt() : 0,
+                        node.hasNonNull("note") ? node.get("note").asText() : "",
+                        node.hasNonNull("dataMovimento") ? node.get("dataMovimento").asText() : "",
+                        node.hasNonNull("utenteId") ? node.get("utenteId").asLong() : null,
+                        node.hasNonNull("utenteUsername") ? node.get("utenteUsername").asText() : ""
+                ));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+    
+    public List<MovimentoMagazzinoDTO> loadMovimentiMagazzino() {
+        List<MovimentoMagazzinoDTO> lista = new ArrayList<>();
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/articoli/movimenti"))
                     .GET()
                     .build();
 

@@ -9,4 +9,6 @@ public interface MovimentoMagazzinoRepository
         extends JpaRepository<MovimentoMagazzino, Long> {
 
     List<MovimentoMagazzino> findByArticoloIdOrderByDataMovimentoDesc(Long articoloId);
+    
+    List<MovimentoMagazzino> findAllByOrderByDataMovimentoDesc();
 }

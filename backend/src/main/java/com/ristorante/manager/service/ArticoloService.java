@@ -100,6 +100,8 @@ public class ArticoloService {
                     : TipoMovimentoMagazzino.SCARICO_MANUALE);
             movimento.setQuantita(Math.abs(deltaMagazzino));
             movimento.setNote("Aggiornamento quantità da scheda articolo");
+            movimento.setUtenteId(request.getUtenteId());
+            movimento.setUtenteUsername(request.getUtenteUsername());
 
             movimentoMagazzinoRepository.save(movimento);
         }
@@ -173,6 +175,22 @@ public class ArticoloService {
                 .orElseThrow(() -> new ResourceNotFoundException("Articolo non trovato con id: " + articoloId));
 
         return movimentoMagazzinoRepository.findByArticoloIdOrderByDataMovimentoDesc(articoloId)
+                .stream()
+                .map(m -> new MovimentoMagazzinoResponse(
+                        m.getId(),
+                        m.getArticolo().getNome(),
+                        m.getTipo().name(),
+                        m.getQuantita(),
+                        m.getNote(),
+                        m.getDataMovimento(),
+                        m.getUtenteId(),
+                        m.getUtenteUsername()
+                ))
+                .toList();
+    }
+    
+    public List<MovimentoMagazzinoResponse> findAllMovimenti() {
+        return movimentoMagazzinoRepository.findAllByOrderByDataMovimentoDesc()
                 .stream()
                 .map(m -> new MovimentoMagazzinoResponse(
                         m.getId(),

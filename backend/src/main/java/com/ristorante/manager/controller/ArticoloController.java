@@ -29,6 +29,11 @@ public class ArticoloController {
     public ArticoloResponse create(@RequestBody ArticoloRequest request) {
         return articoloService.save(request);
     }
+    
+    @GetMapping("/movimenti")
+    public List<MovimentoMagazzinoResponse> getMovimentiMagazzino() {
+        return articoloService.findAllMovimenti();
+    }
 
     @PutMapping("/{id}")
     public ArticoloResponse update(@PathVariable Long id, @RequestBody ArticoloRequest request) {

@@ -600,6 +600,22 @@ public class ArticoliView {
             -fx-cursor: hand;
             -fx-padding: 0 18 0 18;
         """);
+        
+        Button storicoMagazzinoButton = new Button("Storico magazzino");
+        storicoMagazzinoButton.setPrefHeight(42);
+        storicoMagazzinoButton.setStyle("""
+            -fx-background-color: #7c4f2c;
+            -fx-text-fill: white;
+            -fx-font-size: 14px;
+            -fx-font-weight: bold;
+            -fx-background-radius: 10;
+            -fx-cursor: hand;
+            -fx-padding: 0 18 0 18;
+        """);
+
+        storicoMagazzinoButton.setOnAction(e ->
+                new StoricoMagazzinoGlobaleView().show()
+        );
 
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         categoriaFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
@@ -607,7 +623,7 @@ public class ArticoliView {
         statoFilter.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         aggiornaButton.setOnAction(e -> refreshData());
 
-        HBox filtersBar = new HBox(12, searchField, categoriaFilter, statoFilter, magazzinoFilter, aggiornaButton);
+        HBox filtersBar = new HBox(12, searchField, categoriaFilter, statoFilter, magazzinoFilter, aggiornaButton, storicoMagazzinoButton);
         filtersBar.setAlignment(Pos.CENTER_LEFT);
 
         return filtersBar;
