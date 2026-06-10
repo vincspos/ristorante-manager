@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ristorante.ui.common.ServiceResult;
 import com.ristorante.ui.model.ArticoloDTO;
 import com.ristorante.ui.model.MovimentoMagazzinoDTO;
+import com.ristorante.ui.util.SessionManager;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -192,10 +193,16 @@ public class ArticoloService {
             HttpClient client = HttpClient.newHttpClient();
 
             String jsonInput = """
-                {
-                  "delta": %s
-                }
-                """.formatted(delta);
+            	    {
+            	      "delta": %s,
+            	      "utenteId": %s,
+            	      "utenteUsername": "%s"
+            	    }
+            	    """.formatted(
+            	        delta,
+            	        SessionManager.getUtenteId(),
+            	        SessionManager.getUsername()
+            	    );
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(BASE_URL + "/articoli/" + id + "/quantita"))

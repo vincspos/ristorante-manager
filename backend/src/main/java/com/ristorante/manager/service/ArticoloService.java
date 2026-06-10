@@ -126,7 +126,7 @@ public class ArticoloService {
         articoloRepository.delete(articolo);
     }
     
-    public ArticoloResponse updateQuantita(Long id, Integer delta) {
+    public ArticoloResponse updateQuantita(Long id, Integer delta, Long utenteId, String utenteUsername) {
         Articolo articolo = articoloRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Articolo non trovato con id: " + id));
 
@@ -159,6 +159,9 @@ public class ArticoloService {
         movimento.setQuantita(Math.abs(delta));
 
         movimento.setNote("Aggiornamento rapido quantità");
+        
+        movimento.setUtenteId(utenteId);
+        movimento.setUtenteUsername(utenteUsername);
 
         movimentoMagazzinoRepository.save(movimento);
 

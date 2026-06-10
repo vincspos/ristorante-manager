@@ -49,9 +49,18 @@ public class ArticoloController {
     
     @PatchMapping("/{id}/quantita")
     public ArticoloResponse updateQuantita(@PathVariable Long id,
-                                           @RequestBody Map<String, Integer> payload) {
-        Integer delta = payload.get("delta");
-        return articoloService.updateQuantita(id, delta);
+                                           @RequestBody Map<String, Object> payload) {
+        Integer delta = (Integer) payload.get("delta");
+
+        Long utenteId = payload.get("utenteId") != null
+                ? Long.valueOf(payload.get("utenteId").toString())
+                : null;
+
+        String utenteUsername = payload.get("utenteUsername") != null
+                ? payload.get("utenteUsername").toString()
+                : null;
+
+        return articoloService.updateQuantita(id, delta, utenteId, utenteUsername);
     }
     
     @GetMapping("/{id}/movimenti")

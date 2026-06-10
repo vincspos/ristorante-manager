@@ -1,5 +1,9 @@
 package com.ristorante.ui;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ristorante.ui.model.LoginResponseDTO;
+import com.ristorante.ui.util.SessionManager;
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -114,8 +118,19 @@ public class LoginApplication extends Application {
                         }
                     }
 
+                    ObjectMapper mapper = new ObjectMapper();
+
+                    LoginResponseDTO loginResponse =
+                            mapper.readValue(response.toString(), LoginResponseDTO.class);
+
+                    SessionManager.setUtenteLoggato(loginResponse);
+
                     errorLabel.setVisible(false);
-                    new AdminDashboard().show(stage, username);
+
+                    new AdminDashboard().show(
+                            stage,
+                            loginResponse.getUsername()
+                    );
 
                 } else if (status == 401) {
                     errorLabel.setText("Credenziali non valide.");

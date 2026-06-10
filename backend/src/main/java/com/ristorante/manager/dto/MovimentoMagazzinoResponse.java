@@ -40,5 +40,6 @@ public class MovimentoMagazzinoResponse {
     public String getNote() { return note; }
     public LocalDateTime getDataMovimento() { return dataMovimento; }
     public Long getUtenteId() { return utenteId; }
+    public String getUtenteUsername() {return utenteUsername; }
     
 }
